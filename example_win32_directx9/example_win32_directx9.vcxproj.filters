@@ -60,5 +60,6 @@
     <ClInclude Include="frontend\MenuElements.h" />
     <ClInclude Include="imgui\implot.h" />
     <ClInclude Include="imgui\implot_internal.h" />
+    <ClInclude Include="backend\WaveData.h" />
   </ItemGroup>
 </Project>
