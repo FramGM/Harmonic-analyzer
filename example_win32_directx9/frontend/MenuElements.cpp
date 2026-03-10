@@ -2,43 +2,51 @@
 #include "../imgui/imgui.h"
 #include "../imgui/implot.h"
 #include "../Settings.h"
-#include "../backend/WaveData.h"
-#include <memory>
+#include "../backend/ConfigVars.h"
+#include "../backend/Wave.h"
 
-struct ConfigVars
+MenuElements::MenuElements()
 {
-	float m_flFrequency;
-	float m_flAmplitude = 1;
-	bool m_bFitToAxes = false;
-	double m_dlStartTime = 0.0;
-	double m_dlDiffTime = 0.0;
-	bool m_bRealTime = false;
-	float m_flLineWeigth = 1;
-};
-
-inline std::unique_ptr<ConfigVars> g_ConfigVars = std::make_unique<ConfigVars>();
+}
 
 void MenuElements::MainWindow()
 {
-	static const char* chGraphs[] = { "Sin", "Cos", "Sin & Cos" };
-	static const char* chGraphsFormula[] = { "k*sin(x)", "k*cos(x)" };
+	static float dlAmplitude = 1;
+	static float dlFrequency = 0;
 
-	WaveData data1(0.001, g_ConfigVars.get()->m_flAmplitude, g_ConfigVars.get()->m_flFrequency, 0, g_ConfigVars.get()->m_dlStartTime);
+	Wave _Wave(0.001, dlAmplitude, dlFrequency, 0, 0);
 	if (!g_ConfigVars.get()->m_bRealTime)
-	{
-		data1.m_dlTimeDiff = 0;
-		g_ConfigVars.get()->m_dlDiffTime = data1.m_dlTimeDiff;
-		g_ConfigVars.get()->m_dlStartTime = ImGui::GetTime();
-	}
+		_Wave.ResetTime();
+	else
+		_Wave.SetStartTime(0);
 
 	ImGui::BeginChild("Main", ImVec2(g_Settings.m_vecWindowSize.x - 35, g_Settings.m_vecWindowSize.y - 55));
 	{
 		ImGui::SetNextItemWidth(110);
-		ImGui::Combo("Функция", &g_Settings.m_iSelectedGraph, chGraphs, IM_ARRAYSIZE(chGraphs));
+
+		if (ImGui::BeginCombo("Функция", g_Settings.m_strSelectedGraph.c_str()))
+		{
+			for (int n = 0; n < m_vecGraphs.size(); n++)
+			{
+				bool is_selected = (g_Settings.m_strSelectedGraph == m_vecGraphs[n]);
+				if (ImGui::Selectable(m_vecGraphs[n], is_selected))
+				{
+					g_Settings.m_strSelectedGraph = m_vecGraphs[n];
+					g_Settings.m_iSelectedGraph = n;
+				}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+			
+			}
+
+			ImGui::EndCombo();
+		}
+
 		ImGui::Checkbox("Авто-масштабирование", &g_ConfigVars.get()->m_bFitToAxes);
-		ImGui::SliderFloat("Частота", &g_ConfigVars.get()->m_flFrequency, 0, 120);
-		ImGui::SliderFloat("Амплитуда (k)", &g_ConfigVars.get()->m_flAmplitude, 0, 200);
+		ImGui::SliderFloat("Частота", &dlFrequency, 0, 120);
+		ImGui::SliderFloat("Амплитуда (k)", &dlAmplitude, 0, 200);
 		ImGui::SliderFloat("Толщина графика", &g_ConfigVars.get()->m_flLineWeigth, 0.1f, 10);
+		ImGui::SliderFloat("Высота графика", &g_Settings.m_vecGraphSize.y, 100.f, 2140.f);
 
 		static int DotsCount = 1;
 		static int iWaveLength = 1000;
@@ -49,27 +57,29 @@ void MenuElements::MainWindow()
 		if (g_ConfigVars.get()->m_bFitToAxes)
 			ImPlot::SetNextAxesToFit();
 
-		ImPlot::BeginPlot("График");
+		g_Settings.m_vecGraphSize.x = ImGui::GetWindowWidth() - 20;
+		if (ImPlot::BeginPlot("График", g_Settings.m_vecGraphSize))
 		{
 			ImPlotStyle& pStyle = ImPlot::GetStyle();
 			pStyle.LineWeight = g_ConfigVars.get()->m_flLineWeigth;
 			switch (g_Settings.m_iSelectedGraph)
 			{
 			case 0:
-				ImPlot::PlotLineG(chGraphsFormula[g_Settings.m_iSelectedGraph], SineWave, &data1, iWaveLength);
+				ImPlot::PlotLineG(chGraphsFormula[g_Settings.m_iSelectedGraph], SineWave, &_Wave.GetWave(), iWaveLength);
 				break;
 			case 1:
-				ImPlot::PlotLineG(chGraphsFormula[g_Settings.m_iSelectedGraph], CosWave, &data1, iWaveLength);
+				ImPlot::PlotLineG(chGraphsFormula[g_Settings.m_iSelectedGraph], CosWave, &_Wave.GetWave(), iWaveLength);
 				break;
 			case 2:
-				ImPlot::PlotLineG(chGraphsFormula[0], SineWave, &data1, iWaveLength);
-				ImPlot::PlotLineG(chGraphsFormula[1], CosWave, &data1, iWaveLength);
+				ImPlot::PlotLineG(chGraphsFormula[0], SineWave, &_Wave.GetWave(), iWaveLength);
+				ImPlot::PlotLineG(chGraphsFormula[1], CosWave, &_Wave.GetWave(), iWaveLength);
 				break;
 			default:
 				break;
 			}
+
+			ImPlot::EndPlot();
 		}
-		ImPlot::EndPlot();
 
 		if (ImGui::Button("График в реальном времени"))
 			g_ConfigVars.get()->m_bRealTime = !g_ConfigVars.get()->m_bRealTime;
@@ -133,3 +143,4 @@ void MenuElements::ApplyModernStyle()
 	colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.40f, 0.60f, 0.80f, 0.67f);
 	colors[ImGuiCol_ResizeGripActive] = ImVec4(0.40f, 0.60f, 0.80f, 0.95f);
 }
+

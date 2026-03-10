@@ -168,8 +168,10 @@
     <ClCompile Include="imgui\implot_items.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="frontend\MenuElements.cpp" />
+    <ClCompile Include="backend\Wave.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="backend\ConfigVars.h" />
     <ClInclude Include="backend\WaveData.h" />
     <ClInclude Include="imgui\imconfig.h" />
     <ClInclude Include="imgui\imgui.h" />
@@ -183,6 +185,7 @@
     <ClInclude Include="imgui\imstb_truetype.h" />
     <ClInclude Include="frontend\MenuElements.h" />
     <ClInclude Include="Settings.h" />
+    <ClInclude Include="backend\Wave.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

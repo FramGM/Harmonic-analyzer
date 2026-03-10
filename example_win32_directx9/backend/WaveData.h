@@ -1,24 +1,25 @@
 #pragma once
 #include "../imgui/implot.h"
 #include <corecrt_math.h>
+#include <corecrt_math_defines.h>
 
 struct WaveData
 {
 	double X, Amp, Freq, Offset;
 	double m_dlTimeDiff;
-	WaveData(double x, double amp, double freq, double offset, double dlStartTime) { X = x; Amp = amp; Freq = freq; Offset = offset; m_dlTimeDiff = ImGui::GetTime() - dlStartTime; }
+	WaveData(double x, double amp, double freq, double offset, double dlTimeDiff) { X = x; Amp = amp; Freq = freq; Offset = offset; m_dlTimeDiff = dlTimeDiff; }
 };
 
-ImPlotPoint SineWave(int idx, void* data)
+static ImPlotPoint SineWave(int idx, void* data)
 {
 	WaveData* wd = (WaveData*)data;
 	double x = wd->m_dlTimeDiff + idx * wd->X;
-	return ImPlotPoint(x, wd->Offset + wd->Amp * sin(2 * 3.14 * wd->Freq * x));
+	return ImPlotPoint(x, wd->Offset + wd->Amp * sin(2.0 * M_PI * wd->Freq * x));
 }
 
-ImPlotPoint CosWave(int idx, void* data)
+static ImPlotPoint CosWave(int idx, void* data)
 {
 	WaveData* wd = (WaveData*)data;
 	double x = wd->m_dlTimeDiff + idx * wd->X;
-	return ImPlotPoint(x, wd->Offset + wd->Amp * cos(2 * 3.14 * wd->Freq * x));
+	return ImPlotPoint(x, wd->Offset + wd->Amp * cos(2.0 * M_PI * wd->Freq * x));
 }
