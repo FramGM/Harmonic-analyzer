@@ -3,13 +3,6 @@
 #include <corecrt_math.h>
 #include <corecrt_math_defines.h>
 
-struct WaveData
-{
-	double X, Amp, Freq, Offset;
-	double m_dlTimeDiff;
-	WaveData(double x, double amp, double freq, double offset, double dlTimeDiff) { X = x; Amp = amp; Freq = freq; Offset = offset; m_dlTimeDiff = dlTimeDiff; }
-};
-
 static ImPlotPoint SineWave(int idx, void* data)
 {
 	WaveData* wd = (WaveData*)data;
