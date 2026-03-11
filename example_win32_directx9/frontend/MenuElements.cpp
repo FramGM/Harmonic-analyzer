@@ -52,6 +52,8 @@ void MenuElements::MainWindow()
 			if (g_Settings.m_iSelectedGraph == i)
 			{
 				Wave& _CurWave = m_vecWaves.at(i);
+				m_vecGraphsName[i] = std::to_string(_CurWave.GetWave().Freq) + " Гц";
+				g_Settings.m_strSelectedGraph = std::to_string(_CurWave.GetWave().Freq) + " Гц";
 
 			}
 		}
@@ -88,7 +90,7 @@ void MenuElements::MainWindow()
 			Wave _Wave = Wave(0.001, 1, 0, 0, 0);
 			m_vecWaves.push_back(_Wave);
 
-			m_vecGraphsName.push_back(std::string("Сигнал " + std::to_string(m_vecWaves.size())).c_str());
+			m_vecGraphsName.push_back(std::string(std::to_string(_Wave.GetWave().Freq) + " Гц"));
 		}
 		if (ImGui::Button("График в реальном времени"))
 			g_ConfigVars.get()->m_bRealTime = !g_ConfigVars.get()->m_bRealTime;
