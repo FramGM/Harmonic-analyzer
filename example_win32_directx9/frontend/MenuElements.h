@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include "../backend/Wave.h"
 
 class MenuElements
 {
@@ -10,8 +11,7 @@ public:
 	void MainWindow();
 	void ApplyModernStyle();
 private:
-	std::vector<const char*> m_vecGraphs;
-
-	const char* chGraphsFormula[2] = { "k*sin(x)", "k*cos(x)" };
+	std::vector<std::string> m_vecGraphsName;
+	std::vector<Wave> m_vecWaves;
 } inline g_Menu;
 
