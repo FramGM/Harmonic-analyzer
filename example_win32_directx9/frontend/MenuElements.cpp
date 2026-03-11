@@ -3,35 +3,39 @@
 #include "../imgui/implot.h"
 #include "../Settings.h"
 #include "../backend/ConfigVars.h"
-#include "../backend/Wave.h"
 
 MenuElements::MenuElements()
 {
+	Wave _Wave(0.001, 1, 0, 0, 0);
+	m_vecWaves.push_back(_Wave);
+	m_vecGraphsName.push_back("Сигнал 1");
 }
 
 void MenuElements::MainWindow()
-{
-	static float dlAmplitude = 1;
-	static float dlFrequency = 0;
-
-	Wave _Wave(0.001, dlAmplitude, dlFrequency, 0, 0);
+{ 
 	if (!g_ConfigVars.get()->m_bRealTime)
-		_Wave.ResetTime();
+	{
+		for (auto& _Wave : m_vecWaves)
+			_Wave.ResetTime();
+	}
 	else
-		_Wave.SetStartTime(0);
+	{
+		for (auto& _Wave : m_vecWaves)
+			_Wave.ResumeTime();
+	}
 
 	ImGui::BeginChild("Main", ImVec2(g_Settings.m_vecWindowSize.x - 35, g_Settings.m_vecWindowSize.y - 55));
 	{
 		ImGui::SetNextItemWidth(110);
 
-		if (ImGui::BeginCombo("Функция", g_Settings.m_strSelectedGraph.c_str()))
+		if (ImGui::BeginCombo("Сигнал", g_Settings.m_strSelectedGraph.c_str()))
 		{
-			for (int n = 0; n < m_vecGraphs.size(); n++)
+			for (int n = 0; n < m_vecGraphsName.size(); n++)
 			{
-				bool is_selected = (g_Settings.m_strSelectedGraph == m_vecGraphs[n]);
-				if (ImGui::Selectable(m_vecGraphs[n], is_selected))
+				bool is_selected = (g_Settings.m_strSelectedGraph == m_vecGraphsName[n]);
+				if (ImGui::Selectable(m_vecGraphsName[n].c_str(), is_selected))
 				{
-					g_Settings.m_strSelectedGraph = m_vecGraphs[n];
+					g_Settings.m_strSelectedGraph = m_vecGraphsName[n];
 					g_Settings.m_iSelectedGraph = n;
 				}
 					if (is_selected)
@@ -41,10 +45,19 @@ void MenuElements::MainWindow()
 
 			ImGui::EndCombo();
 		}
-
 		ImGui::Checkbox("Авто-масштабирование", &g_ConfigVars.get()->m_bFitToAxes);
-		ImGui::SliderFloat("Частота", &dlFrequency, 0, 120);
-		ImGui::SliderFloat("Амплитуда (k)", &dlAmplitude, 0, 200);
+
+		for (int i = 0; i < m_vecWaves.size(); i++)
+		{
+			if (g_Settings.m_iSelectedGraph == i)
+			{
+				Wave& _CurWave = m_vecWaves.at(i);
+
+			}
+		}
+		ImGui::SliderFloat("Частота", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Freq, 0, 120);
+		ImGui::SliderFloat("Амплитуда (k)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Amp, 0, 200);
+
 		ImGui::SliderFloat("Толщина графика", &g_ConfigVars.get()->m_flLineWeigth, 0.1f, 10);
 		ImGui::SliderFloat("Высота графика", &g_Settings.m_vecGraphSize.y, 100.f, 2140.f);
 
@@ -62,25 +75,21 @@ void MenuElements::MainWindow()
 		{
 			ImPlotStyle& pStyle = ImPlot::GetStyle();
 			pStyle.LineWeight = g_ConfigVars.get()->m_flLineWeigth;
-			switch (g_Settings.m_iSelectedGraph)
+			
+			for (int i = 0; i < m_vecWaves.size(); i++)
 			{
-			case 0:
-				ImPlot::PlotLineG(chGraphsFormula[g_Settings.m_iSelectedGraph], SineWave, &_Wave.GetWave(), iWaveLength);
-				break;
-			case 1:
-				ImPlot::PlotLineG(chGraphsFormula[g_Settings.m_iSelectedGraph], CosWave, &_Wave.GetWave(), iWaveLength);
-				break;
-			case 2:
-				ImPlot::PlotLineG(chGraphsFormula[0], SineWave, &_Wave.GetWave(), iWaveLength);
-				ImPlot::PlotLineG(chGraphsFormula[1], CosWave, &_Wave.GetWave(), iWaveLength);
-				break;
-			default:
-				break;
+				ImPlot::PlotLineG(m_vecGraphsName.at(i).c_str(), SineWave, &m_vecWaves.at(i).GetWave(), iWaveLength);
 			}
 
 			ImPlot::EndPlot();
 		}
+		if (ImGui::Button("Добавить сигнал"))
+		{
+			Wave _Wave = Wave(0.001, 1, 0, 0, 0);
+			m_vecWaves.push_back(_Wave);
 
+			m_vecGraphsName.push_back(std::string("Сигнал " + std::to_string(m_vecWaves.size())).c_str());
+		}
 		if (ImGui::Button("График в реальном времени"))
 			g_ConfigVars.get()->m_bRealTime = !g_ConfigVars.get()->m_bRealTime;
 	}
@@ -143,4 +152,3 @@ void MenuElements::ApplyModernStyle()
 	colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.40f, 0.60f, 0.80f, 0.67f);
 	colors[ImGuiCol_ResizeGripActive] = ImVec4(0.40f, 0.60f, 0.80f, 0.95f);
 }
-
