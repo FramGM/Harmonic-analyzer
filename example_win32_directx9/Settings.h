@@ -6,6 +6,6 @@ struct Settings
 {
 	ImVec2 m_vecWindowSize = ImVec2(1000, 700);
 	int m_iSelectedGraph = 0;
-	std::string m_strSelectedGraph = "Sin";
-	ImVec2 m_vecGraphSize = ImVec2(200, 200);
+	std::string m_strSelectedGraph = "Choice signal";
+	ImVec2 m_vecGraphSize = ImVec2(200, 350);
 } inline g_Settings;
