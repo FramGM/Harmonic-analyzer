@@ -32,7 +32,7 @@ static ImPlotPoint MaxLine(int idx, void* data)
 	{
 		WaveData& wd = wave.GetWave();
 		double time = wd.m_dlTimeDiff;
-		double value = wd.Offset + wd.Amp * sin(2.0 * M_PI * (wd.Freq / 100) * (x + time));
+		double value = wd.Offset + wd.Amp * sin(2.0 * M_PI * wd.Freq * (x + time));
 
 		if (value > maxValue)
 			maxValue = value;
