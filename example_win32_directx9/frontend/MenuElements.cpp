@@ -1,7 +1,6 @@
 #include "MenuElements.h"
 #include "../imgui/imgui.h"
 #include "../imgui/implot.h"
-#include "../Settings.h"
 #include "../backend/ConfigVars.h"
 #include <algorithm>
 
@@ -10,6 +9,38 @@ MenuElements::MenuElements()
 	Wave _Wave(0.001, 1, 0, 0, 0, 1);
 	m_vecWaves.push_back(_Wave);
 	m_vecGraphsName.push_back("1. 0 Гц");
+}
+
+void MenuElements::DeleteWave(int iIndex)
+{
+	int indexToRemove = iIndex;
+
+	m_vecWaves.erase(m_vecWaves.begin() + indexToRemove);
+	m_vecGraphsName.erase(m_vecGraphsName.begin() + indexToRemove);
+
+	//printf("Deleted: %i\n", indexToRemove + 1);
+
+	for (int i = indexToRemove; i < m_vecWaves.size(); i++)
+	{
+		m_vecWaves[i].GetWave().m_iIndex = i + 1;
+
+		char nameBuffer[64];
+		snprintf(nameBuffer, sizeof(nameBuffer), "%i. %g Гц##%i", i + 1, m_vecWaves[i].GetWave().Freq, i + 1);
+		m_vecGraphsName[i] = nameBuffer;
+	}
+
+	//for (int i = 0; i < m_vecWaves.size(); i++)
+	//	printf("Signal: %i\n", m_vecWaves.at(i).GetIndex());
+
+	if (indexToRemove <= g_Settings.m_iSelectedGraph)
+	{
+		g_Settings.m_iSelectedGraph = std::max(0, g_Settings.m_iSelectedGraph - 1);
+	}
+
+	if (!m_vecGraphsName.empty())
+	{
+		g_Settings.m_strSelectedGraph = m_vecGraphsName[g_Settings.m_iSelectedGraph];
+	}
 }
 
 void MenuElements::DrawUpperItems()
@@ -255,39 +286,23 @@ void MenuElements::DrawLowerItems()
 	}
 
 	if (ImGui::Button("Удалить сигнал") && m_vecWaves.size() > 1)
-	{
-		int indexToRemove = g_Settings.m_iSelectedGraph;
-		
-		m_vecWaves.erase(m_vecWaves.begin() + indexToRemove);
-		m_vecGraphsName.erase(m_vecGraphsName.begin() + indexToRemove);
-		
-		//printf("Deleted: %i\n", indexToRemove + 1);
-
-		for (int i = indexToRemove; i < m_vecWaves.size(); i++)
-		{
-			m_vecWaves[i].GetWave().m_iIndex = i + 1;
-			
-			char nameBuffer[64];
-			snprintf(nameBuffer, sizeof(nameBuffer), "%i. %g Гц##%i", i + 1, m_vecWaves[i].GetWave().Freq, i + 1);
-			m_vecGraphsName[i] = nameBuffer;
-		}
-		
-		//for (int i = 0; i < m_vecWaves.size(); i++)
-		//	printf("Signal: %i\n", m_vecWaves.at(i).GetIndex());
-
-		if (indexToRemove <= g_Settings.m_iSelectedGraph)
-		{
-			g_Settings.m_iSelectedGraph = std::max(0, g_Settings.m_iSelectedGraph - 1);
-		}
-		
-		if (!m_vecGraphsName.empty())
-		{
-			g_Settings.m_strSelectedGraph = m_vecGraphsName[g_Settings.m_iSelectedGraph];
-		}	
-	}
+		DeleteWave();
 
 	if (ImGui::Button("График в реальном времени"))
 		g_ConfigVars.get()->m_bRealTime = !g_ConfigVars.get()->m_bRealTime;
+
+	if (ImGui::Button("Сброс параметров"))
+	{
+		m_vecWaves.clear();
+		m_vecGraphsName.clear();
+
+		Wave _Wave(0.001, 1, 0, 0, 0, 1);
+		m_vecWaves.push_back(_Wave);
+		m_vecGraphsName.push_back("1. 0 Гц");
+		g_Settings.m_iSelectedGraph = 0;
+		g_Settings.m_strSelectedGraph = "1. 0 Гц";
+	}
+
 }
 
 void MenuElements::MainWindow()

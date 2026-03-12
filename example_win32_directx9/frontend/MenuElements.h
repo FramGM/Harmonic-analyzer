@@ -2,11 +2,14 @@
 #include <vector>
 #include <string>
 #include "../backend/Wave.h"
+#include "../Settings.h"
 
 class MenuElements
 {
 public:
 	MenuElements();
+
+	void DeleteWave(int iIndex = g_Settings.m_iSelectedGraph);
 
 	void DrawUpperItems();
 	void DrawGraph();
