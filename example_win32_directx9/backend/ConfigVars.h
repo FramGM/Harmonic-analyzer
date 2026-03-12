@@ -5,6 +5,8 @@ struct ConfigVars
 {
 	bool m_bFitToAxes = false;
 	bool m_bRealTime = false;
+	bool m_bShowMaxHeightLine = false;
+	bool m_bShowMaxLine = false;
 	float m_flLineWeigth = 1;
 };
 
