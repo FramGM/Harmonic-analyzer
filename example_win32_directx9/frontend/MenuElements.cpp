@@ -3,6 +3,7 @@
 #include "../imgui/implot.h"
 #include "../Settings.h"
 #include "../backend/ConfigVars.h"
+#include <algorithm>
 
 MenuElements::MenuElements()
 {
@@ -11,6 +12,34 @@ MenuElements::MenuElements()
 	m_vecGraphsName.push_back("Сигнал 1");
 }
 
+struct MaxLineData
+{
+	std::vector<Wave> m_vecWaves;
+	double m_dlStartX;
+	double m_dlEndX;
+	int m_iNumPoints;
+};
+
+static ImPlotPoint MaxLine(int idx, void* data)
+{
+	MaxLineData* maxData = (MaxLineData*)data;
+
+	double x = maxData->m_dlStartX + (maxData->m_dlEndX - maxData->m_dlStartX) * idx / (maxData->m_iNumPoints - 1);
+
+	double maxValue = -std::numeric_limits<double>::infinity();
+
+	for (auto& wave : maxData->m_vecWaves)
+	{
+		WaveData& wd = wave.GetWave();
+		double time = wd.m_dlTimeDiff;
+		double value = wd.Offset + wd.Amp * sin(2.0 * M_PI * (wd.Freq / 100) * (x + time));
+
+		if (value > maxValue)
+			maxValue = value;
+	}
+
+	return ImPlotPoint(x, maxValue);
+}
 void MenuElements::MainWindow()
 { 
 	if (!g_ConfigVars.get()->m_bRealTime)
@@ -46,19 +75,23 @@ void MenuElements::MainWindow()
 			ImGui::EndCombo();
 		}
 		ImGui::Checkbox("Авто-масштабирование", &g_ConfigVars.get()->m_bFitToAxes);
+		ImGui::Checkbox("Показать макс. высоту", &g_ConfigVars.get()->m_bShowMaxHeightLine);
+		ImGui::Checkbox("Линия максимумов", &g_ConfigVars.get()->m_bShowMaxLine);
 
 		for (int i = 0; i < m_vecWaves.size(); i++)
 		{
 			if (g_Settings.m_iSelectedGraph == i)
 			{
 				Wave& _CurWave = m_vecWaves.at(i);
-				m_vecGraphsName[i] = std::to_string(_CurWave.GetWave().Freq) + " Гц";
-				g_Settings.m_strSelectedGraph = std::to_string(_CurWave.GetWave().Freq) + " Гц";
-
+				char freqBuffer[32];
+				snprintf(freqBuffer, sizeof(freqBuffer), "%g Гц", _CurWave.GetFrequency());
+				m_vecGraphsName[i] = freqBuffer;
+				g_Settings.m_strSelectedGraph = freqBuffer;
 			}
 		}
-		ImGui::SliderFloat("Частота", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Freq, 0, 120);
-		ImGui::SliderFloat("Амплитуда (k)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Amp, 0, 200);
+
+		ImGui::SliderFloat("Частота", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Freq, 0, 1000, "%.1f");
+		ImGui::SliderFloat("Амплитуда (k)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Amp, 0, 200, "%.1f");
 
 		ImGui::SliderFloat("Толщина графика", &g_ConfigVars.get()->m_flLineWeigth, 0.1f, 10);
 		ImGui::SliderFloat("Высота графика", &g_Settings.m_vecGraphSize.y, 100.f, 2140.f);
@@ -83,6 +116,37 @@ void MenuElements::MainWindow()
 				ImPlot::PlotLineG(m_vecGraphsName.at(i).c_str(), SineWave, &m_vecWaves.at(i).GetWave(), iWaveLength);
 			}
 
+			if (g_ConfigVars.get()->m_bShowMaxLine && !m_vecWaves.empty())
+			{
+				double currentTime = m_vecWaves.at(0).GetWave().m_dlTimeDiff;
+				double startX = currentTime;
+				double endX = currentTime + iWaveLength * m_vecWaves.at(0).GetWave().X;
+				MaxLineData maxData = { m_vecWaves, startX, endX, iWaveLength };
+
+				ImPlot::SetNextLineStyle(ImVec4(1, 0, 0, 1), 2.0f);
+				ImPlot::PlotLineG("Максимумы", MaxLine, &maxData, iWaveLength);
+			}
+
+			if (ImPlot::IsPlotHovered() && g_ConfigVars.get()->m_bShowMaxHeightLine)
+			{
+				double mouseX = std::clamp(ImPlot::GetPlotMousePos().x, m_vecWaves.at(g_Settings.m_iSelectedGraph).GetStartPos(), m_vecWaves.at(g_Settings.m_iSelectedGraph).GetStartPos() + DotsCount);
+				double mouseY = ImPlot::GetPlotMousePos().y;
+
+				double maxHeight = -std::numeric_limits<double>::infinity();
+				double minHeight = std::numeric_limits<double>::infinity();
+
+				for (auto& wave : m_vecWaves)
+				{
+					double value = CalculateWaveValue(wave.GetWave(), mouseX);
+					maxHeight = std::max(maxHeight, value);
+					minHeight = std::min(minHeight, value);
+				}
+
+				ImPlot::DragLineX(0, &mouseX, ImVec4(1, 0, 0, 1), 1.0f, ImPlotDragToolFlags_NoInputs);
+
+				ImPlot::Annotation(mouseX, maxHeight, ImVec4(1, 1, 1, 1), ImVec2(5, 5), true, "Макс: %.2f", maxHeight);
+			}
+
 			ImPlot::EndPlot();
 		}
 		if (ImGui::Button("Добавить сигнал"))
@@ -92,6 +156,18 @@ void MenuElements::MainWindow()
 
 			m_vecGraphsName.push_back(std::string(std::to_string(_Wave.GetWave().Freq) + " Гц"));
 		}
+
+		if (ImGui::Button("Удалить сигнал") && m_vecWaves.size() > 1)
+		{
+			m_vecWaves.erase(m_vecWaves.begin() + g_Settings.m_iSelectedGraph);
+			m_vecGraphsName.erase(m_vecGraphsName.begin() + g_Settings.m_iSelectedGraph);
+
+			if (g_Settings.m_iSelectedGraph >= m_vecWaves.size())
+				g_Settings.m_iSelectedGraph = m_vecWaves.size() - 1;
+
+			g_Settings.m_strSelectedGraph = m_vecGraphsName[g_Settings.m_iSelectedGraph];
+		}
+
 		if (ImGui::Button("График в реальном времени"))
 			g_ConfigVars.get()->m_bRealTime = !g_ConfigVars.get()->m_bRealTime;
 	}
