@@ -5,7 +5,8 @@ struct WaveData
 {
 	float X, Amp, Freq, Offset;
 	float m_dlTimeDiff;
-	WaveData(float x, float amp, float freq, float offset, float dlTimeDiff) { X = x; Amp = amp; Freq = freq; Offset = offset; m_dlTimeDiff = dlTimeDiff; }
+	int m_iIndex;
+	WaveData(float x, float amp, float freq, float offset, float dlTimeDiff, int iIndex) { X = x; Amp = amp; Freq = freq; Offset = offset; m_dlTimeDiff = dlTimeDiff; m_iIndex = iIndex; }
 };
 
 #include "WaveFunc.h"
@@ -13,7 +14,7 @@ struct WaveData
 class Wave
 {
 public:
-	Wave(float dlStartPosX, float dlAmplitude, float dlFrequency, float dlOffset, float dlStartTime) : m_WaveData(dlStartPosX, dlAmplitude, dlFrequency, dlOffset, dlStartTime) {};
+	Wave(float dlStartPosX, float dlAmplitude, float dlFrequency, float dlOffset, float dlStartTime, int iIndex) : m_WaveData(dlStartPosX, dlAmplitude, dlFrequency, dlOffset, dlStartTime, iIndex) {};
 
 	WaveData& GetWave() { return m_WaveData; }
 
@@ -25,6 +26,7 @@ public:
 	double GetFrequency() { return m_WaveData.Freq; }
 	double GetAmplitude() { return m_WaveData.Amp; }
 	double GetStartPos() { return m_WaveData.X; }
+	int GetIndex() { return m_WaveData.m_iIndex; }
 
 	void ResumeTime() { m_WaveData.m_dlTimeDiff = ImGui::GetTime() - m_dlStartTime; }
 	void ResetTime() { m_WaveData.m_dlTimeDiff = 0; m_dlStartTime = ImGui::GetTime(); }

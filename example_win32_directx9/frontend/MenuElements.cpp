@@ -7,20 +7,41 @@
 
 MenuElements::MenuElements()
 {
-	Wave _Wave(0.001, 1, 0, 0, 0);
+	Wave _Wave(0.001, 1, 0, 0, 0, 1);
 	m_vecWaves.push_back(_Wave);
-	m_vecGraphsName.push_back("Сигнал 1");
+	m_vecGraphsName.push_back("0 Гц");
 }
 
 void MenuElements::DrawUpperItems()
 {
 	ImGui::SetNextItemWidth(110);
 
-	if (ImGui::BeginCombo("Сигнал", g_Settings.m_strSelectedGraph.c_str()))
+	if (ImGui::BeginCombo("Гармоника", g_Settings.m_strSelectedGraph.c_str()))
 	{
 		for (int n = 0; n < m_vecGraphsName.size(); n++)
 		{
-			bool is_selected = (g_Settings.m_strSelectedGraph == m_vecGraphsName[n]);
+			bool bDrawHarmonic = false;
+			switch (g_ConfigVars.get()->m_iHarmonicParity)
+			{
+			case ALL_PARITY:
+				bDrawHarmonic = true;
+				break;
+			case EVEN_PARITY:
+				if (n % 2 != 0)
+					bDrawHarmonic = true;
+				break;
+			case ODD_PARITY:
+				if (n % 2 == 0)
+					bDrawHarmonic = true;
+				break;
+			default:
+				break;
+			}
+
+			if (!bDrawHarmonic)
+				continue;
+
+			bool is_selected = (g_Settings.m_iSelectedGraph == n);
 			if (ImGui::Selectable(m_vecGraphsName[n].c_str(), is_selected))
 			{
 				g_Settings.m_strSelectedGraph = m_vecGraphsName[n];
@@ -28,16 +49,29 @@ void MenuElements::DrawUpperItems()
 			}
 			if (is_selected)
 				ImGui::SetItemDefaultFocus();
-
 		}
-
 		ImGui::EndCombo();
 	}
 
 	ImGui::Checkbox("Авто-масштабирование", &g_ConfigVars.get()->m_bFitToAxes);
 	ImGui::Checkbox("Показать макс. высоту", &g_ConfigVars.get()->m_bShowMaxHeightLine);
 	ImGui::Checkbox("Линия максимумов", &g_ConfigVars.get()->m_bShowMaxLine);
-	ImGui::Checkbox("Линия Фурье", &g_ConfigVars.get()->m_bDrawFourier);
+
+	if (ImGui::BeginCombo("Индексы гармоник", g_ConfigVars.get()->m_strHarmonicParity.c_str()))
+	{
+		for (int n = 0; n < m_vecHarmonicParityNames.size(); n++)
+		{
+			bool is_selected = (g_ConfigVars.get()->m_iHarmonicParity == n);
+			if (ImGui::Selectable(m_vecHarmonicParityNames[n].c_str(), is_selected))
+			{
+				g_ConfigVars.get()->m_strHarmonicParity = m_vecHarmonicParityNames[n];
+				g_ConfigVars.get()->m_iHarmonicParity = n;
+			}
+			if (is_selected)
+				ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
+	}
 
 	for (int i = 0; i < m_vecWaves.size(); i++)
 	{
@@ -45,14 +79,17 @@ void MenuElements::DrawUpperItems()
 		{
 			Wave& _CurWave = m_vecWaves.at(i);
 			char freqBuffer[32];
-			snprintf(freqBuffer, sizeof(freqBuffer), "%g Гц", _CurWave.GetFrequency());
+			snprintf(freqBuffer, sizeof(freqBuffer), "%g Гц##%i", _CurWave.GetFrequency(), i);
 			m_vecGraphsName[i] = freqBuffer;
 			g_Settings.m_strSelectedGraph = freqBuffer;
 		}
 	}
 
-	ImGui::SliderFloat("Частота", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Freq, 0, 1000, "%.1f");
-	ImGui::SliderFloat("Амплитуда (k)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Amp, 0, 200, "%.1f");
+	if (g_Settings.m_iSelectedGraph >= 0 && g_Settings.m_iSelectedGraph < m_vecWaves.size())
+	{
+		ImGui::SliderFloat("Частота", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Freq, 0, 1000, "%.3f");
+		ImGui::SliderFloat("Амплитуда (k)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Amp, -200, 200, "%.3f");
+	}
 
 	ImGui::SliderFloat("Толщина графика", &g_ConfigVars.get()->m_flLineWeigth, 0.1f, 10);
 	ImGui::SliderFloat("Высота графика", &g_Settings.m_vecGraphSize.y, 100.f, 2140.f);
@@ -80,33 +117,39 @@ static ImPlotPoint MaxLine(int idx, void* data)
 
 	double maxValue = -std::numeric_limits<double>::infinity();
 
-	for (auto& wave : maxData->m_vecWaves)
+	for (int i = 0; i < maxData->m_vecWaves.size(); i++)
 	{
+		bool bDrawHarmonic = false;
+		switch (g_ConfigVars.get()->m_iHarmonicParity)
+		{
+		case ALL_PARITY:
+			bDrawHarmonic = true;
+			break;
+		case EVEN_PARITY:
+			if (i % 2 != 0)
+				bDrawHarmonic = true;
+			break;
+		case ODD_PARITY:
+			if (i % 2 == 0)
+				bDrawHarmonic = true;
+			break;
+		default:
+			break;
+		}
+
+		if (!bDrawHarmonic)
+			continue;
+
+		Wave wave = maxData->m_vecWaves.at(i);
 		WaveData& wd = wave.GetWave();
 		double time = wd.m_dlTimeDiff;
-		double value = wd.Offset + wd.Amp * sin(2.0 * M_PI * wd.Freq * (x + time));
+		double value = wd.Offset + wd.Amp * sin(2.0 * M_PI * wd.Freq * wd.m_iIndex * x);
 
 		if (value > maxValue)
 			maxValue = value;
 	}
 
 	return ImPlotPoint(x, maxValue);
-}
-
-struct FourierWave
-{
-	WaveData m_Wave;
-	int m_iWaveIndex;
-	int m_iWaveLength;
-};
-
-static ImPlotPoint InverseFourierTransform(int idx, void* data)
-{
-	FourierWave* wd = (FourierWave*)data;
-	double x = wd->m_Wave.m_dlTimeDiff + idx * wd->m_Wave.X;
-
-	//Maybe not x
-	return ImPlotPoint(x, wd->m_Wave.Amp * sin(wd->m_Wave.Freq * x * wd->m_iWaveLength));
 }
 
 void MenuElements::DrawGraph()
@@ -119,7 +162,25 @@ void MenuElements::DrawGraph()
 
 		for (int i = 0; i < m_vecWaves.size(); i++)
 		{
-			ImPlot::PlotLineG(m_vecGraphsName.at(i).c_str(), SineWave, &m_vecWaves.at(i).GetWave(), iWaveLength);
+			bool bDrawHarmonic = false;
+			switch (g_ConfigVars.get()->m_iHarmonicParity)
+			{
+			case ALL_PARITY:
+				bDrawHarmonic = true;
+				break;
+			case EVEN_PARITY:
+				if (i % 2 != 0)
+					bDrawHarmonic = true;
+				break;
+			case ODD_PARITY:
+				if (i % 2 == 0)
+					bDrawHarmonic = true;
+				break;
+			default:
+				break;
+			}
+			if (bDrawHarmonic)
+				ImPlot::PlotLineG(m_vecGraphsName.at(i).c_str(), SineWave, &m_vecWaves.at(i).GetWave(), iWaveLength);
 		}
 
 		if (g_ConfigVars.get()->m_bShowMaxLine && !m_vecWaves.empty())
@@ -133,11 +194,6 @@ void MenuElements::DrawGraph()
 			ImPlot::PlotLineG("Максимумы", MaxLine, &maxData, iWaveLength);
 		}
 
-		if (g_ConfigVars.get()->m_bDrawFourier)
-		{
-			
-		}
-
 		if (ImPlot::IsPlotHovered() && g_ConfigVars.get()->m_bShowMaxHeightLine)
 		{
 			double mouseX = std::clamp(ImPlot::GetPlotMousePos().x, m_vecWaves.at(g_Settings.m_iSelectedGraph).GetStartPos(), m_vecWaves.at(g_Settings.m_iSelectedGraph).GetStartPos() + DotsCount);
@@ -146,8 +202,31 @@ void MenuElements::DrawGraph()
 			double maxHeight = -std::numeric_limits<double>::infinity();
 			double minHeight = std::numeric_limits<double>::infinity();
 
-			for (auto& wave : m_vecWaves)
+			for (int i = 0; i < m_vecWaves.size(); i++)
 			{
+				bool bDrawHarmonic = false;
+				switch (g_ConfigVars.get()->m_iHarmonicParity)
+				{
+				case ALL_PARITY:
+					bDrawHarmonic = true;
+					break;
+				case EVEN_PARITY:
+					if (i % 2 != 0)
+						bDrawHarmonic = true;
+					break;
+				case ODD_PARITY:
+					if (i % 2 == 0)
+						bDrawHarmonic = true;
+					break;
+				default:
+					break;
+				}
+
+				if (!bDrawHarmonic)
+					continue;
+
+				Wave wave = m_vecWaves.at(i);
+
 				double value = CalculateWaveValue(wave.GetWave(), mouseX);
 				maxHeight = std::max(maxHeight, value);
 				minHeight = std::min(minHeight, value);
@@ -166,21 +245,42 @@ void MenuElements::DrawLowerItems()
 {
 	if (ImGui::Button("Добавить сигнал"))
 	{
-		Wave _Wave = Wave(0.001, 1, 0, 0, 0);
+		Wave _Wave = Wave(0.001, 1, 0, 0, 0, m_vecWaves.size() + 1);
 		m_vecWaves.push_back(_Wave);
 
-		m_vecGraphsName.push_back(std::string(std::to_string(_Wave.GetWave().Freq) + " Гц"));
+		m_vecGraphsName.push_back(std::string(std::to_string(_Wave.GetWave().Freq) + " Гц##" + std::to_string(m_vecWaves.size())));
 	}
 
 	if (ImGui::Button("Удалить сигнал") && m_vecWaves.size() > 1)
 	{
-		m_vecWaves.erase(m_vecWaves.begin() + g_Settings.m_iSelectedGraph);
-		m_vecGraphsName.erase(m_vecGraphsName.begin() + g_Settings.m_iSelectedGraph);
+		int indexToRemove = g_Settings.m_iSelectedGraph;
+		
+		m_vecWaves.erase(m_vecWaves.begin() + indexToRemove);
+		m_vecGraphsName.erase(m_vecGraphsName.begin() + indexToRemove);
+		
+		//printf("Deleted: %i\n", indexToRemove + 1);
 
-		if (g_Settings.m_iSelectedGraph >= m_vecWaves.size())
-			g_Settings.m_iSelectedGraph = m_vecWaves.size() - 1;
+		for (int i = indexToRemove; i < m_vecWaves.size(); i++)
+		{
+			m_vecWaves[i].GetWave().m_iIndex = i + 1;
+			
+			char nameBuffer[64];
+			snprintf(nameBuffer, sizeof(nameBuffer), "%g Гц##%i", m_vecWaves[i].GetWave().Freq, i + 1);
+			m_vecGraphsName[i] = nameBuffer;
+		}
+		
+		//for (int i = 0; i < m_vecWaves.size(); i++)
+		//	printf("Signal: %i\n", m_vecWaves.at(i).GetIndex());
 
-		g_Settings.m_strSelectedGraph = m_vecGraphsName[g_Settings.m_iSelectedGraph];
+		if (indexToRemove <= g_Settings.m_iSelectedGraph)
+		{
+			g_Settings.m_iSelectedGraph = std::max(0, g_Settings.m_iSelectedGraph - 1);
+		}
+		
+		if (!m_vecGraphsName.empty())
+		{
+			g_Settings.m_strSelectedGraph = m_vecGraphsName[g_Settings.m_iSelectedGraph];
+		}	
 	}
 
 	if (ImGui::Button("График в реальном времени"))
