@@ -22,7 +22,7 @@ public:
 	void SetOffset(double dlOffset) { m_WaveData.Offset = dlOffset; }
 	void SetStartTime(double dlStartTime) { m_WaveData.m_dlTimeDiff = dlStartTime; }
 
-	double GetFrequency() { return m_WaveData.Freq / 100; }
+	double GetFrequency() { return m_WaveData.Freq; }
 	double GetAmplitude() { return m_WaveData.Amp; }
 	double GetStartPos() { return m_WaveData.X; }
 
