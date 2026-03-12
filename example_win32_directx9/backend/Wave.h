@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 
 struct WaveData
 {
@@ -23,6 +24,7 @@ public:
 
 	double GetFrequency() { return m_WaveData.Freq; }
 	double GetAmplitude() { return m_WaveData.Amp; }
+	double GetStartPos() { return m_WaveData.X; }
 
 	void ResumeTime() { m_WaveData.m_dlTimeDiff = ImGui::GetTime() - m_dlStartTime; }
 	void ResetTime() { m_WaveData.m_dlTimeDiff = 0; m_dlStartTime = ImGui::GetTime(); }
@@ -31,3 +33,4 @@ private:
 	double m_dlStartTime;
 	WaveData m_WaveData;
 };
+
