@@ -14,6 +14,7 @@ struct ConfigVars
 	bool m_bRealTime = false;
 	bool m_bShowMaxHeightLine = false;
 	bool m_bShowMaxLine = false;
+	bool m_bShowSum = false;
 	int m_iHarmonicParity = 0;
 	std::string m_strHarmonicParity = "";
 	float m_flLineWeigth = 1;

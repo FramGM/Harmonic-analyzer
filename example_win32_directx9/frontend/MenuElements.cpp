@@ -99,9 +99,9 @@ void MenuElements::DrawUpperItems()
 	if (ImGui::Button("Удалить текущую гармонику") && m_vecWaves.size() > 1)
 		DeleteWave();
 
-
+	ImGui::Checkbox("Показать сумму гармоник", &g_ConfigVars.get()->m_bShowSum);
 	ImGui::Checkbox("Авто-масштабирование", &g_ConfigVars.get()->m_bFitToAxes);
-	ImGui::Checkbox("Показать макс. высоту", &g_ConfigVars.get()->m_bShowMaxHeightLine);
+	ImGui::Checkbox("Показать максимальную высоту суммы гармоник", &g_ConfigVars.get()->m_bShowMaxHeightLine);
 	ImGui::Checkbox("Линия максимумов", &g_ConfigVars.get()->m_bShowMaxLine);
 
 	if (ImGui::BeginCombo("Индексы гармоник", g_ConfigVars.get()->m_strHarmonicParity.c_str()))
@@ -190,13 +190,50 @@ static ImPlotPoint MaxLine(int idx, void* data)
 		Wave wave = maxData->m_vecWaves.at(i);
 		WaveData& wd = wave.GetWave();
 		double time = wd.m_dlTimeDiff;
-		double value = wd.Offset + wd.Amp * sin(2.0 * M_PI * wd.Freq * wd.m_iIndex * x);
+		double value = YFormula(&wd, x);
 
 		if (value > maxValue)
 			maxValue = value;
 	}
 
 	return ImPlotPoint(x, maxValue);
+}
+
+static ImPlotPoint SumWave(int idx, void* data)
+{
+	std::vector<Wave>* waves = (std::vector<Wave>*)data;
+
+	double time = (*waves)[0].GetWave().m_dlTimeDiff + idx * (*waves)[0].GetWave().X;
+
+	double sum = 0;
+	for (int i = 0; i < waves->size(); i++)
+	{
+		bool bDrawHarmonic = false;
+		switch (g_ConfigVars.get()->m_iHarmonicParity)
+		{
+		case ALL_PARITY:
+			bDrawHarmonic = true;
+			break;
+		case EVEN_PARITY:
+			if (i % 2 != 0)
+				bDrawHarmonic = true;
+			break;
+		case ODD_PARITY:
+			if (i % 2 == 0)
+				bDrawHarmonic = true;
+			break;
+		default:
+			break;
+		}
+
+		if (!bDrawHarmonic)
+			continue;
+
+		WaveData& wd = waves->at(i).GetWave();
+		sum += YFormula(&wd, time);
+	}
+
+	return ImPlotPoint(time, sum);
 }
 
 void MenuElements::DrawGraph()
@@ -230,15 +267,10 @@ void MenuElements::DrawGraph()
 				ImPlot::PlotLineG(m_vecGraphsName.at(i).c_str(), SineWave, &m_vecWaves.at(i).GetWave(), iWaveLength);
 		}
 
-		if (g_ConfigVars.get()->m_bShowMaxLine && !m_vecWaves.empty())
+		if (g_ConfigVars.get()->m_bShowSum)
 		{
-			double currentTime = m_vecWaves.at(0).GetWave().m_dlTimeDiff;
-			double startX = currentTime;
-			double endX = currentTime + iWaveLength * m_vecWaves.at(0).GetWave().X;
-			MaxLineData maxData = { m_vecWaves, startX, endX, iWaveLength };
-
-			ImPlot::SetNextLineStyle(ImVec4(1, 0, 0, 1), 2.0f);
-			ImPlot::PlotLineG("Максимумы", MaxLine, &maxData, iWaveLength);
+			ImPlot::SetNextLineStyle(ImVec4(0, 1, 0, 1), 2.0f);
+			ImPlot::PlotLineG("Сумма", SumWave, &m_vecWaves, iWaveLength);
 		}
 
 		if (ImPlot::IsPlotHovered() && g_ConfigVars.get()->m_bShowMaxHeightLine)
@@ -272,11 +304,36 @@ void MenuElements::DrawGraph()
 				if (!bDrawHarmonic)
 					continue;
 
-				Wave wave = m_vecWaves.at(i);
+				double sum = 0;
+				for (int i = 0; i < m_vecWaves.size(); i++)
+				{
+					bool bDrawHarmonic = false;
+					switch (g_ConfigVars.get()->m_iHarmonicParity)
+					{
+					case ALL_PARITY:
+						bDrawHarmonic = true;
+						break;
+					case EVEN_PARITY:
+						if (i % 2 != 0)
+							bDrawHarmonic = true;
+						break;
+					case ODD_PARITY:
+						if (i % 2 == 0)
+							bDrawHarmonic = true;
+						break;
+					default:
+						break;
+					}
 
-				double value = CalculateWaveValue(wave.GetWave(), mouseX);
-				maxHeight = std::max(maxHeight, value);
-				minHeight = std::min(minHeight, value);
+					if (!bDrawHarmonic)
+						continue;
+
+					WaveData& wd = m_vecWaves.at(i).GetWave();
+					sum += YFormula(&wd, mouseX);
+				}
+
+				maxHeight = std::max(maxHeight, sum);
+				minHeight = std::min(minHeight, sum);
 			}
 
 			ImPlot::DragLineX(0, &mouseX, ImVec4(1, 0, 0, 1), 1.0f, ImPlotDragToolFlags_NoInputs);
