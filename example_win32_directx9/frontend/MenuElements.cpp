@@ -9,7 +9,7 @@ MenuElements::MenuElements()
 {
 	Wave _Wave(0.001, 1, 0, 0, 0, 1);
 	m_vecWaves.push_back(_Wave);
-	m_vecGraphsName.push_back("0 Гц");
+	m_vecGraphsName.push_back("1. 0 Гц");
 }
 
 void MenuElements::DrawUpperItems()
@@ -79,7 +79,7 @@ void MenuElements::DrawUpperItems()
 		{
 			Wave& _CurWave = m_vecWaves.at(i);
 			char freqBuffer[32];
-			snprintf(freqBuffer, sizeof(freqBuffer), "%g Гц##%i", _CurWave.GetFrequency(), i);
+			snprintf(freqBuffer, sizeof(freqBuffer), "%i. %g Гц##%i", i + 1, _CurWave.GetFrequency(), i);
 			m_vecGraphsName[i] = freqBuffer;
 			g_Settings.m_strSelectedGraph = freqBuffer;
 		}
@@ -248,7 +248,10 @@ void MenuElements::DrawLowerItems()
 		Wave _Wave = Wave(0.001, 1, 0, 0, 0, m_vecWaves.size() + 1);
 		m_vecWaves.push_back(_Wave);
 
-		m_vecGraphsName.push_back(std::string(std::to_string(_Wave.GetWave().Freq) + " Гц##" + std::to_string(m_vecWaves.size())));
+		char nameBuffer[64];
+		snprintf(nameBuffer, sizeof(nameBuffer), "%i. %g Гц##%i", m_vecWaves.size(), _Wave.GetWave().Freq, m_vecWaves.size());
+
+		m_vecGraphsName.push_back(nameBuffer);
 	}
 
 	if (ImGui::Button("Удалить сигнал") && m_vecWaves.size() > 1)
@@ -265,7 +268,7 @@ void MenuElements::DrawLowerItems()
 			m_vecWaves[i].GetWave().m_iIndex = i + 1;
 			
 			char nameBuffer[64];
-			snprintf(nameBuffer, sizeof(nameBuffer), "%g Гц##%i", m_vecWaves[i].GetWave().Freq, i + 1);
+			snprintf(nameBuffer, sizeof(nameBuffer), "%i. %g Гц##%i", i + 1, m_vecWaves[i].GetWave().Freq, i + 1);
 			m_vecGraphsName[i] = nameBuffer;
 		}
 		
