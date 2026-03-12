@@ -37,6 +37,7 @@ void MenuElements::DrawUpperItems()
 	ImGui::Checkbox("Авто-масштабирование", &g_ConfigVars.get()->m_bFitToAxes);
 	ImGui::Checkbox("Показать макс. высоту", &g_ConfigVars.get()->m_bShowMaxHeightLine);
 	ImGui::Checkbox("Линия максимумов", &g_ConfigVars.get()->m_bShowMaxLine);
+	ImGui::Checkbox("Линия Фурье", &g_ConfigVars.get()->m_bDrawFourier);
 
 	for (int i = 0; i < m_vecWaves.size(); i++)
 	{
@@ -92,6 +93,22 @@ static ImPlotPoint MaxLine(int idx, void* data)
 	return ImPlotPoint(x, maxValue);
 }
 
+struct FourierWave
+{
+	WaveData m_Wave;
+	int m_iWaveIndex;
+	int m_iWaveLength;
+};
+
+static ImPlotPoint InverseFourierTransform(int idx, void* data)
+{
+	FourierWave* wd = (FourierWave*)data;
+	double x = wd->m_Wave.m_dlTimeDiff + idx * wd->m_Wave.X;
+
+	//Maybe not x
+	return ImPlotPoint(x, wd->m_Wave.Amp * sin(wd->m_Wave.Freq * x * wd->m_iWaveLength));
+}
+
 void MenuElements::DrawGraph()
 {
 	g_Settings.m_vecGraphSize.x = ImGui::GetWindowWidth() - 20;
@@ -114,6 +131,11 @@ void MenuElements::DrawGraph()
 
 			ImPlot::SetNextLineStyle(ImVec4(1, 0, 0, 1), 2.0f);
 			ImPlot::PlotLineG("Максимумы", MaxLine, &maxData, iWaveLength);
+		}
+
+		if (g_ConfigVars.get()->m_bDrawFourier)
+		{
+			
 		}
 
 		if (ImPlot::IsPlotHovered() && g_ConfigVars.get()->m_bShowMaxHeightLine)
