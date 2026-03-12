@@ -83,6 +83,22 @@ void MenuElements::DrawUpperItems()
 		}
 		ImGui::EndCombo();
 	}
+	ImGui::SameLine();
+	if (ImGui::Button("Добавить гармонику"))
+	{
+		Wave _Wave = Wave(0.001, 1, 0, 0, 0, m_vecWaves.size() + 1);
+		m_vecWaves.push_back(_Wave);
+
+		char nameBuffer[64];
+		snprintf(nameBuffer, sizeof(nameBuffer), "%i. %g Гц##%i", m_vecWaves.size(), _Wave.GetWave().Freq, m_vecWaves.size());
+
+		m_vecGraphsName.push_back(nameBuffer);
+	}
+	ImGui::SameLine();
+
+	if (ImGui::Button("Удалить текущую гармонику") && m_vecWaves.size() > 1)
+		DeleteWave();
+
 
 	ImGui::Checkbox("Авто-масштабирование", &g_ConfigVars.get()->m_bFitToAxes);
 	ImGui::Checkbox("Показать макс. высоту", &g_ConfigVars.get()->m_bShowMaxHeightLine);
@@ -274,20 +290,6 @@ void MenuElements::DrawGraph()
 
 void MenuElements::DrawLowerItems()
 {
-	if (ImGui::Button("Добавить сигнал"))
-	{
-		Wave _Wave = Wave(0.001, 1, 0, 0, 0, m_vecWaves.size() + 1);
-		m_vecWaves.push_back(_Wave);
-
-		char nameBuffer[64];
-		snprintf(nameBuffer, sizeof(nameBuffer), "%i. %g Гц##%i", m_vecWaves.size(), _Wave.GetWave().Freq, m_vecWaves.size());
-
-		m_vecGraphsName.push_back(nameBuffer);
-	}
-
-	if (ImGui::Button("Удалить сигнал") && m_vecWaves.size() > 1)
-		DeleteWave();
-
 	if (ImGui::Button("График в реальном времени"))
 		g_ConfigVars.get()->m_bRealTime = !g_ConfigVars.get()->m_bRealTime;
 
