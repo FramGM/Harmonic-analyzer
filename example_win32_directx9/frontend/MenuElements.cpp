@@ -134,6 +134,14 @@ void MenuElements::DrawUpperItems()
 	if (g_Settings.m_iSelectedGraph >= 0 && g_Settings.m_iSelectedGraph < m_vecWaves.size())
 	{
 		ImGui::SliderFloat("Частота", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Freq, 0, 1000, "%.3f");
+		ImGui::SameLine();
+		if (ImGui::Button("Поставить всем одну частоту"))
+		{
+			double dlFrequency = m_vecWaves.at(g_Settings.m_iSelectedGraph).GetFrequency();
+			for (auto& _Wave : m_vecWaves)
+				_Wave.SetFrequency(dlFrequency);
+		}
+
 		ImGui::SliderFloat("Амплитуда (k)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Amp, -200, 200, "%.3f");
 		ImGui::SliderFloat("Фаза (ф)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlPhase, -200, 200, "%.3f");
 	}
@@ -275,7 +283,7 @@ void MenuElements::DrawGraph()
 
 		if (ImPlot::IsPlotHovered() && g_ConfigVars.get()->m_bShowMaxHeightLine)
 		{
-			double mouseX = std::clamp(ImPlot::GetPlotMousePos().x, m_vecWaves.at(g_Settings.m_iSelectedGraph).GetStartPos(), m_vecWaves.at(g_Settings.m_iSelectedGraph).GetStartPos() + DotsCount);
+			double mouseX = std::clamp((float)ImPlot::GetPlotMousePos().x, m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlTimeDiff, m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlTimeDiff + DotsCount);
 			double mouseY = ImPlot::GetPlotMousePos().y;
 
 			double maxHeight = -std::numeric_limits<double>::infinity();
