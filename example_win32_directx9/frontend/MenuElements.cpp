@@ -102,7 +102,6 @@ void MenuElements::DrawUpperItems()
 	ImGui::Checkbox("Показать сумму гармоник", &g_ConfigVars.get()->m_bShowSum);
 	ImGui::Checkbox("Авто-масштабирование", &g_ConfigVars.get()->m_bFitToAxes);
 	ImGui::Checkbox("Показать максимальную высоту суммы гармоник", &g_ConfigVars.get()->m_bShowMaxHeightLine);
-	ImGui::Checkbox("Линия максимумов", &g_ConfigVars.get()->m_bShowMaxLine);
 
 	if (ImGui::BeginCombo("Индексы гармоник", g_ConfigVars.get()->m_strHarmonicParity.c_str()))
 	{
@@ -201,12 +200,12 @@ static ImPlotPoint MaxLine(int idx, void* data)
 
 static ImPlotPoint SumWave(int idx, void* data)
 {
-	std::vector<Wave>* waves = (std::vector<Wave>*)data;
+	std::vector<Wave>& waves = *(std::vector<Wave>*)data;
 
-	double time = (*waves)[0].GetWave().m_dlTimeDiff + idx * (*waves)[0].GetWave().X;
+	double time = waves[0].GetWave().m_dlTimeDiff + idx * waves[0].GetWave().X;
 
 	double sum = 0;
-	for (int i = 0; i < waves->size(); i++)
+	for (int i = 0; i < waves.size(); i++)
 	{
 		bool bDrawHarmonic = false;
 		switch (g_ConfigVars.get()->m_iHarmonicParity)
@@ -229,7 +228,7 @@ static ImPlotPoint SumWave(int idx, void* data)
 		if (!bDrawHarmonic)
 			continue;
 
-		WaveData& wd = waves->at(i).GetWave();
+		WaveData& wd = waves.at(i).GetWave();
 		sum += YFormula(&wd, time);
 	}
 
