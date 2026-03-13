@@ -5,7 +5,7 @@
 
 static double YFormula(WaveData* wd, double x)
 {
-	return (wd->Offset + wd->Amp * sin(2.0 * M_PI * wd->Freq * wd->m_iIndex * x));
+	return (wd->Offset + wd->Amp * sin(2.0 * M_PI * wd->Freq * wd->m_iIndex * x + wd->m_dlPhase));
 }
 
 static ImPlotPoint SineWave(int idx, void* data)

@@ -3,7 +3,7 @@
 
 struct WaveData
 {
-	float X, Amp, Freq, Offset;
+	float X, Amp, Freq, Offset, m_dlPhase = 0;
 	float m_dlTimeDiff;
 	int m_iIndex;
 	WaveData(float x, float amp, float freq, float offset, float dlTimeDiff, int iIndex) { X = x; Amp = amp; Freq = freq; Offset = offset; m_dlTimeDiff = dlTimeDiff; m_iIndex = iIndex; }
@@ -21,6 +21,7 @@ public:
 	void SetAmplitude(double dlAmplitude) { m_WaveData.Amp = dlAmplitude; }
 	void SetFrequency(double dlFrequency) { m_WaveData.Freq = dlFrequency; }
 	void SetOffset(double dlOffset) { m_WaveData.Offset = dlOffset; }
+	void SetPhase(double dPhase) { m_WaveData.m_dlPhase = dPhase; }
 	void SetStartTime(double dlStartTime) { m_WaveData.m_dlTimeDiff = dlStartTime; }
 
 	double GetFrequency() { return m_WaveData.Freq; }

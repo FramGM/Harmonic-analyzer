@@ -135,6 +135,7 @@ void MenuElements::DrawUpperItems()
 	{
 		ImGui::SliderFloat("Частота", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Freq, 0, 1000, "%.3f");
 		ImGui::SliderFloat("Амплитуда (k)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Amp, -200, 200, "%.3f");
+		ImGui::SliderFloat("Фаза (ф)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlPhase, -200, 200, "%.3f");
 	}
 
 	ImGui::SliderFloat("Толщина графика", &g_ConfigVars.get()->m_flLineWeigth, 0.1f, 10);
