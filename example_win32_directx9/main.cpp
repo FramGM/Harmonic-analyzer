@@ -74,7 +74,7 @@ int main(int, char**)
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    g_Menu.ApplyModernStyle();
+    g_Menu.get()->ApplyModernStyle();
     //ImGui::StyleColorsLight();
 
     // Setup Platform/Renderer backends
@@ -196,7 +196,7 @@ int main(int, char**)
 
 			ImGui::Begin("Hello, world!", &bOpen, fMainFlags);
 
-            g_Menu.MainWindow();
+            g_Menu.get()->MainWindow();
 
 			ImGui::End();
 		}
