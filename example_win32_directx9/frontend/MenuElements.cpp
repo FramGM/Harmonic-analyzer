@@ -4,6 +4,13 @@
 #include "../backend/ConfigVars.h"
 #include <algorithm>
 
+ConfigVars::ConfigVars()
+{
+	m_vecSliderNames = { "Частота", "Амплитуда", "Фаза", "Толщина графика", "Высота графика", "Длинна волны" };
+	m_vecEnableSliders = std::vector<bool>(m_vecSliderNames.size(), false);
+	m_strHarmonicParity = "Все";
+}
+
 MenuElements::MenuElements()
 {
 	Wave _Wave(0.001, 1, 0, 0, 0, 1);
@@ -99,6 +106,12 @@ void MenuElements::DrawUpperItems()
 	if (ImGui::Button("Удалить текущую гармонику") && m_vecWaves.size() > 1)
 		DeleteWave();
 
+	if (g_ConfigVars.get()->m_vecEnableSliders.size() != g_ConfigVars.get()->m_vecSliderNames.size()) {
+		g_ConfigVars.get()->m_vecEnableSliders.resize(g_ConfigVars.get()->m_vecSliderNames.size(), false);
+	}
+
+	ShowMultiSelectCombo("Настройки", g_ConfigVars.get()->m_vecSliderNames, g_ConfigVars.get()->m_vecEnableSliders);
+
 	ImGui::Checkbox("Показать сумму гармоник", &g_ConfigVars.get()->m_bShowSum);
 	ImGui::Checkbox("Авто-масштабирование", &g_ConfigVars.get()->m_bFitToAxes);
 	ImGui::Checkbox("Показать максимальную высоту суммы гармоник", &g_ConfigVars.get()->m_bShowMaxHeightLine);
@@ -131,7 +144,7 @@ void MenuElements::DrawUpperItems()
 		}
 	}
 
-	if (g_Settings.m_iSelectedGraph >= 0 && g_Settings.m_iSelectedGraph < m_vecWaves.size())
+	if (g_Settings.m_iSelectedGraph >= 0 && g_Settings.m_iSelectedGraph < m_vecWaves.size() && g_ConfigVars.get()->m_vecEnableSliders.at(FREQUENCY))
 	{
 		ImGui::SliderFloat("Частота", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Freq, 0, 1000, "%.3f");
 		ImGui::SameLine();
@@ -142,15 +155,20 @@ void MenuElements::DrawUpperItems()
 				_Wave.SetFrequency(dlFrequency);
 		}
 
-		ImGui::SliderFloat("Амплитуда (k)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Amp, -200, 200, "%.3f");
-		ImGui::SliderFloat("Фаза (ф)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlPhase, -200, 200, "%.3f");
+		if (g_ConfigVars.get()->m_vecEnableSliders.at(AMPLITUDE))
+			ImGui::SliderFloat("Амплитуда (k)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Amp, -200, 200, "%.3f");
+		if (g_ConfigVars.get()->m_vecEnableSliders.at(PHASE))
+			ImGui::SliderFloat("Фаза (ф)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlPhase, -200, 200, "%.3f");
 	}
 
-	ImGui::SliderFloat("Толщина графика", &g_ConfigVars.get()->m_flLineWeigth, 0.1f, 10);
-	ImGui::SliderFloat("Высота графика", &g_Settings.m_vecGraphSize.y, 100.f, 2140.f);
+	if (g_ConfigVars.get()->m_vecEnableSliders.at(WIDTHLINE))
+		ImGui::SliderFloat("Толщина графика", &g_ConfigVars.get()->m_flLineWeigth, 0.1f, 10);
+	if (g_ConfigVars.get()->m_vecEnableSliders.at(HEIGTHGRAPH))
+		ImGui::SliderFloat("Высота графика", &g_Settings.m_vecGraphSize.y, 100.f, 2140.f);
 
-	if (ImGui::SliderInt("Длина волны", &DotsCount, 1, 100))
-		iWaveLength = DotsCount * 1000;
+	if (g_ConfigVars.get()->m_vecEnableSliders.at(WAVELENGTH))
+		if (ImGui::SliderInt("Длина волны", &DotsCount, 1, 100))
+			iWaveLength = DotsCount * 1000;
 
 	if (g_ConfigVars.get()->m_bFitToAxes)
 		ImPlot::SetNextAxesToFit();
