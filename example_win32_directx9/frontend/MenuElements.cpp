@@ -37,6 +37,8 @@ static bool CheckOnParity(int n)
 	default:
 		break;
 	}
+
+	return bDrawHarmonic;
 }
 
 void MenuElements::DeleteWave(int iIndex)
@@ -262,24 +264,20 @@ void MenuElements::DrawGraph()
 			double maxHeight = -std::numeric_limits<double>::infinity();
 			double minHeight = std::numeric_limits<double>::infinity();
 
+			double sum = 0;
+
 			for (int i = 0; i < m_vecWaves.size(); i++)
 			{
 				if (!CheckOnParity(i))
 					continue;
 
-				double sum = 0;
-				for (int i = 0; i < m_vecWaves.size(); i++)
-				{
-					if (!CheckOnParity(i))
-						continue;
 
 					WaveData& wd = m_vecWaves.at(i).GetWave();
 					sum += YFormula(&wd, mouseX);
-				}
 
-				maxHeight = std::max(maxHeight, sum);
-				minHeight = std::min(minHeight, sum);
 			}
+			maxHeight = std::max(maxHeight, sum);
+			minHeight = std::min(minHeight, sum);
 
 			ImPlot::DragLineX(0, &mouseX, ImVec4(1, 0, 0, 1), 1.0f, ImPlotDragToolFlags_NoInputs);
 
