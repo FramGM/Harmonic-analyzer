@@ -264,49 +264,13 @@ void MenuElements::DrawGraph()
 
 			for (int i = 0; i < m_vecWaves.size(); i++)
 			{
-				bool bDrawHarmonic = false;
-				switch (g_ConfigVars.get()->m_iHarmonicParity)
-				{
-				case ALL_PARITY:
-					bDrawHarmonic = true;
-					break;
-				case EVEN_PARITY:
-					if (i % 2 != 0)
-						bDrawHarmonic = true;
-					break;
-				case ODD_PARITY:
-					if (i % 2 == 0)
-						bDrawHarmonic = true;
-					break;
-				default:
-					break;
-				}
-
-				if (!bDrawHarmonic)
+				if (!CheckOnParity(i))
 					continue;
 
 				double sum = 0;
 				for (int i = 0; i < m_vecWaves.size(); i++)
 				{
-					bool bDrawHarmonic = false;
-					switch (g_ConfigVars.get()->m_iHarmonicParity)
-					{
-					case ALL_PARITY:
-						bDrawHarmonic = true;
-						break;
-					case EVEN_PARITY:
-						if (i % 2 != 0)
-							bDrawHarmonic = true;
-						break;
-					case ODD_PARITY:
-						if (i % 2 == 0)
-							bDrawHarmonic = true;
-						break;
-					default:
-						break;
-					}
-
-					if (!bDrawHarmonic)
+					if (!CheckOnParity(i))
 						continue;
 
 					WaveData& wd = m_vecWaves.at(i).GetWave();
