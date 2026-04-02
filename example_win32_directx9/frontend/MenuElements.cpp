@@ -18,6 +18,27 @@ MenuElements::MenuElements()
 	m_vecGraphsName.push_back("1. 0 Гц");
 }
 
+static bool CheckOnParity(int n)
+{
+	bool bDrawHarmonic = false;
+	switch (g_ConfigVars.get()->m_iHarmonicParity)
+	{
+	case ALL_PARITY:
+		bDrawHarmonic = true;
+		break;
+	case EVEN_PARITY:
+		if (n % 2 != 0)
+			bDrawHarmonic = true;
+		break;
+	case ODD_PARITY:
+		if (n % 2 == 0)
+			bDrawHarmonic = true;
+		break;
+	default:
+		break;
+	}
+}
+
 void MenuElements::DeleteWave(int iIndex)
 {
 	int indexToRemove = iIndex;
@@ -58,25 +79,8 @@ void MenuElements::DrawUpperItems()
 	{
 		for (int n = 0; n < m_vecGraphsName.size(); n++)
 		{
-			bool bDrawHarmonic = false;
-			switch (g_ConfigVars.get()->m_iHarmonicParity)
-			{
-			case ALL_PARITY:
-				bDrawHarmonic = true;
-				break;
-			case EVEN_PARITY:
-				if (n % 2 != 0)
-					bDrawHarmonic = true;
-				break;
-			case ODD_PARITY:
-				if (n % 2 == 0)
-					bDrawHarmonic = true;
-				break;
-			default:
-				break;
-			}
 
-			if (!bDrawHarmonic)
+			if (!CheckOnParity(n))
 				continue;
 
 			bool is_selected = (g_Settings.m_iSelectedGraph == n);
@@ -192,25 +196,7 @@ static ImPlotPoint MaxLine(int idx, void* data)
 
 	for (int i = 0; i < maxData->m_vecWaves.size(); i++)
 	{
-		bool bDrawHarmonic = false;
-		switch (g_ConfigVars.get()->m_iHarmonicParity)
-		{
-		case ALL_PARITY:
-			bDrawHarmonic = true;
-			break;
-		case EVEN_PARITY:
-			if (i % 2 != 0)
-				bDrawHarmonic = true;
-			break;
-		case ODD_PARITY:
-			if (i % 2 == 0)
-				bDrawHarmonic = true;
-			break;
-		default:
-			break;
-		}
-
-		if (!bDrawHarmonic)
+		if (!CheckOnParity(i))
 			continue;
 
 		Wave wave = maxData->m_vecWaves.at(i);
@@ -234,25 +220,7 @@ static ImPlotPoint SumWave(int idx, void* data)
 	double sum = 0;
 	for (int i = 0; i < waves.size(); i++)
 	{
-		bool bDrawHarmonic = false;
-		switch (g_ConfigVars.get()->m_iHarmonicParity)
-		{
-		case ALL_PARITY:
-			bDrawHarmonic = true;
-			break;
-		case EVEN_PARITY:
-			if (i % 2 != 0)
-				bDrawHarmonic = true;
-			break;
-		case ODD_PARITY:
-			if (i % 2 == 0)
-				bDrawHarmonic = true;
-			break;
-		default:
-			break;
-		}
-
-		if (!bDrawHarmonic)
+		if (!CheckOnParity(i))
 			continue;
 
 		WaveData& wd = waves.at(i).GetWave();
@@ -276,24 +244,7 @@ void MenuElements::DrawGraph()
 
 		for (int i = 0; i < m_vecWaves.size(); i++)
 		{
-			bool bDrawHarmonic = false;
-			switch (g_ConfigVars.get()->m_iHarmonicParity)
-			{
-			case ALL_PARITY:
-				bDrawHarmonic = true;
-				break;
-			case EVEN_PARITY:
-				if (i % 2 != 0)
-					bDrawHarmonic = true;
-				break;
-			case ODD_PARITY:
-				if (i % 2 == 0)
-					bDrawHarmonic = true;
-				break;
-			default:
-				break;
-			}
-			if (bDrawHarmonic)
+			if (CheckOnParity(i))
 				ImPlot::PlotLineG(m_vecGraphsName.at(i).c_str(), SineWave, &m_vecWaves.at(i).GetWave(), iWaveLength);
 		}
 
