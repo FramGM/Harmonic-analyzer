@@ -32,7 +32,7 @@ void MenuElements::DeleteWave(int iIndex)
 		m_vecWaves[i].GetWave().m_iIndex = i + 1;
 
 		char nameBuffer[64];
-		snprintf(nameBuffer, sizeof(nameBuffer), "%i. %g Гц##%i", i + 1, m_vecWaves[i].GetWave().Freq, i + 1);
+		snprintf(nameBuffer, sizeof(nameBuffer), "%i; %g Гц##%i", i + 1, m_vecWaves[i].GetWave().Freq, i + 1);
 		m_vecGraphsName[i] = nameBuffer;
 	}
 
@@ -54,7 +54,7 @@ void MenuElements::DrawUpperItems()
 {
 	ImGui::SetNextItemWidth(110);
 
-	if (ImGui::BeginCombo("Гармоника", g_Settings.m_strSelectedGraph.c_str()))
+	if (ImGui::BeginCombo("Индекс и частота гармоники", g_Settings.m_strSelectedGraph.c_str()))
 	{
 		for (int n = 0; n < m_vecGraphsName.size(); n++)
 		{
@@ -97,7 +97,7 @@ void MenuElements::DrawUpperItems()
 		m_vecWaves.push_back(_Wave);
 
 		char nameBuffer[64];
-		snprintf(nameBuffer, sizeof(nameBuffer), "%i. %g Гц##%i", m_vecWaves.size(), _Wave.GetWave().Freq, m_vecWaves.size());
+		snprintf(nameBuffer, sizeof(nameBuffer), "%i; %g Гц##%i", m_vecWaves.size(), _Wave.GetWave().Freq, m_vecWaves.size());
 
 		m_vecGraphsName.push_back(nameBuffer);
 	}
@@ -114,7 +114,7 @@ void MenuElements::DrawUpperItems()
 
 	ImGui::Checkbox("Показать сумму гармоник", &g_ConfigVars.get()->m_bShowSum);
 	ImGui::Checkbox("Авто-масштабирование", &g_ConfigVars.get()->m_bFitToAxes);
-	ImGui::Checkbox("Показать максимальную высоту суммы гармоник", &g_ConfigVars.get()->m_bShowMaxHeightLine);
+	ImGui::Checkbox("Показать амплитуду сигнала в текущий момент", &g_ConfigVars.get()->m_bShowMaxHeightLine);
 
 	if (ImGui::BeginCombo("Индексы гармоник", g_ConfigVars.get()->m_strHarmonicParity.c_str()))
 	{
@@ -138,7 +138,7 @@ void MenuElements::DrawUpperItems()
 		{
 			Wave& _CurWave = m_vecWaves.at(i);
 			char freqBuffer[32];
-			snprintf(freqBuffer, sizeof(freqBuffer), "%i. %g Гц##%i", i + 1, _CurWave.GetFrequency(), i);
+			snprintf(freqBuffer, sizeof(freqBuffer), "%i; %g Гц##%i", i + 1, _CurWave.GetFrequency(), i);
 			m_vecGraphsName[i] = freqBuffer;
 			g_Settings.m_strSelectedGraph = freqBuffer;
 		}
@@ -265,8 +265,12 @@ static ImPlotPoint SumWave(int idx, void* data)
 void MenuElements::DrawGraph()
 {
 	g_Settings.m_vecGraphSize.x = ImGui::GetWindowWidth() - 20;
+
 	if (ImPlot::BeginPlot("График", g_Settings.m_vecGraphSize))
 	{
+		ImPlot::SetupAxis(ImAxis_X1, "t, с");
+		ImPlot::SetupAxis(ImAxis_Y1, "Амплитуда, A");
+
 		ImPlotStyle& pStyle = ImPlot::GetStyle();
 		pStyle.LineWeight = g_ConfigVars.get()->m_flLineWeigth;
 
