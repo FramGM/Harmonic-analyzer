@@ -174,7 +174,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="backend\configs\ConfigSystem.h" />
-    <ClInclude Include="backend\configs\ConfigVars.h" />
     <ClInclude Include="backend\WaveData.h" />
     <ClInclude Include="backend\waves\WaveFunc.h" />
     <ClInclude Include="imgui\imconfig.h" />

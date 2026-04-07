@@ -10,23 +10,30 @@ enum EParity : int
 	ODD_PARITY
 };
 
+enum EFunctions : int
+{
+	EFitToAxes,
+	ERealTime,
+	EShowMaxHeightLine,
+	EShowSum,
+	EALLFINCTIONS
+};
+
 class ConfigSystem
 {
 public:
+	ConfigSystem();
 	bool LoadConfig(std::string strConfigName);
 	bool SaveConfig(std::string strConfigName);
+	void GetConfigString(std::string& strOutput);
 
 	bool RemoveConfig(std::string strConfigName);
-	bool CreateConfig(std::string strConfigName);
 	bool RefreshConfig();
 
 	std::vector<std::string> m_vecSliderNames;
 	std::vector<bool> m_vecEnableSliders;
-
-	bool m_bFitToAxes = false;
-	bool m_bRealTime = false;
-	bool m_bShowMaxHeightLine = false;
-	bool m_bShowSum = false;
+	std::vector<bool> m_vecFunctions = std::vector<bool>(EALLFINCTIONS, false);
+	
 	int m_iHarmonicParity = 0;
 	std::string m_strHarmonicParity;
 	float m_flLineWeigth = 1;

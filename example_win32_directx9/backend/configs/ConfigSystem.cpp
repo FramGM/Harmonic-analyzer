@@ -30,6 +30,12 @@ static std::string DataPath() {
 	return dir;
 }
 
+ConfigSystem::ConfigSystem() {
+	m_vecSliderNames = { "Частота", "Амплитуда", "Фаза", "Толщина графика", "Высота графика", "Длинна волны" };
+	m_vecEnableSliders = std::vector<bool>(m_vecSliderNames.size(), false);
+	m_strHarmonicParity = "Все";
+}
+
 bool ConfigSystem::LoadConfig(std::string strConfigName)
 {
 	std::string strFolderPath = DataPath();
@@ -42,8 +48,36 @@ bool ConfigSystem::LoadConfig(std::string strConfigName)
 	if (!pFile.is_open() || pFile.bad())
 		throw std::exception("Can't open file");
 
+	std::string strElem;
+	while (std::getline(pFile, strElem))
+	{
+		std::vector<std::string> vecElem = split(strElem, "|");
 
+		int i = 0;
+		{
+			std::string strElem = vecElem.at(i);
 
+			int iCount = std::atoi(strElem.c_str());
+			for (; i + 1 < iCount; i++)
+				m_vecEnableSliders.at(i) = std::atoi(vecElem.at(i + 1).c_str());
+
+			strElem = vecElem.at(i);
+			iCount = std::atoi(strElem.c_str());
+			for (; i + 1 < iCount; i++)
+				m_vecFunctions.at(i) = std::atoi(vecElem.at(i + 1).c_str());
+
+			strElem = vecElem.at(i);
+			m_iHarmonicParity = std::atoi(strElem.c_str());
+			i++;
+
+			strElem = vecElem.at(i);
+			m_strHarmonicParity = strElem;
+			i++;
+
+			strElem = vecElem.at(i);
+			m_flLineWeigth = std::atof(strElem.c_str());
+		}
+	}
 }
 
 bool ConfigSystem::SaveConfig(std::string strConfigName)
@@ -57,11 +91,32 @@ bool ConfigSystem::SaveConfig(std::string strConfigName)
 	if (!std::filesystem::exists(strFolderPath))
 		std::filesystem::create_directories(strFolderPath);
 
-	std::ifstream pReadFile(strFilePath);
-	if (!pReadFile.good()) 
+	std::ofstream pFile(strFilePath);
+	if (!pFile.good())
 		throw std::exception("Can't create file");
-	
+
 	std::string strConfig;
-	
-	
+	GetConfigString(strConfig);
+
+	pFile << strConfig;
+	return true;
+}
+
+void ConfigSystem::GetConfigString(std::string& strOutput)
+{
+	strOutput = std::to_string(m_vecEnableSliders.size()) + "|";
+	for (auto bValue : m_vecEnableSliders)
+	{
+		strOutput += (int)bValue + "|";
+	}
+
+	strOutput += std::to_string(m_vecFunctions.size()) + "|";
+	for (auto bValue : m_vecFunctions)
+	{
+		strOutput += (int)bValue + "|";
+	}
+
+	strOutput += std::to_string(m_iHarmonicParity) + "|";
+	strOutput += m_strHarmonicParity + "|";
+	strOutput += std::to_string(m_flLineWeigth);
 }

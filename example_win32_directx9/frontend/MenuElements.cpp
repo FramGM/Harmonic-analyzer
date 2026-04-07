@@ -4,18 +4,11 @@
 #include "../backend/configs/ConfigSystem.h"
 #include <algorithm>
 
-ConfigSystem::ConfigSystem()
-{
-	m_vecSliderNames = { "Частота", "Амплитуда", "Фаза", "Толщина графика", "Высота графика", "Длинна волны" };
-	m_vecEnableSliders = std::vector<bool>(m_vecSliderNames.size(), false);
-	m_strHarmonicParity = "Все";
-}
-
 MenuElements::MenuElements()
 {
 	Wave _Wave(0.001, 1, 0, 0, 0, 1);
 	m_vecWaves.push_back(_Wave);
-	m_vecGraphsName.push_back("1. 0 Гц");
+	m_vecGraphsName.push_back("1; 0 Гц");
 }
 
 static bool CheckOnParity(int n)
@@ -118,9 +111,23 @@ void MenuElements::DrawUpperItems()
 
 	ShowMultiSelectCombo("Настройки", g_ConfigSystem.get()->m_vecSliderNames, g_ConfigSystem.get()->m_vecEnableSliders);
 
-	ImGui::Checkbox("Показать сумму гармоник", &g_ConfigSystem.get()->m_bShowSum);
-	ImGui::Checkbox("Авто-масштабирование", &g_ConfigSystem.get()->m_bFitToAxes);
-	ImGui::Checkbox("Показать амплитуду сигнала в текущий момент", &g_ConfigSystem.get()->m_bShowMaxHeightLine);
+	if (bool showSum = g_ConfigSystem.get()->m_vecFunctions.at(EShowSum); ImGui::Checkbox("Показать сумму гармоник", &showSum))
+		g_ConfigSystem.get()->m_vecFunctions.at(EShowSum) = showSum;
+	
+	if (bool fitToAxes = g_ConfigSystem.get()->m_vecFunctions.at(EFitToAxes); ImGui::Checkbox("Авто-масштабирование", &fitToAxes))
+		g_ConfigSystem.get()->m_vecFunctions.at(EFitToAxes) = fitToAxes;
+
+	if (bool showMaxHeightLine = g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine); ImGui::Checkbox("Показать амплитуду сигнала в текущий момент", &showMaxHeightLine))
+		g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine) = showMaxHeightLine;
+
+	static char chBuffer[64];
+	ImGui::InputText("Название конфига", chBuffer, IM_ARRAYSIZE(chBuffer));
+	if (ImGui::Button("Сохранить"))
+		g_ConfigSystem.get()->SaveConfig(std::string(chBuffer));
+	ImGui::SameLine();
+	if (ImGui::Button("Загрузить"))
+		g_ConfigSystem.get()->LoadConfig(std::string(chBuffer));
+
 
 	if (ImGui::BeginCombo("Индексы гармоник", g_ConfigSystem.get()->m_strHarmonicParity.c_str()))
 	{
@@ -176,7 +183,7 @@ void MenuElements::DrawUpperItems()
 		if (ImGui::SliderInt("Длина волны", &DotsCount, 1, 100))
 			iWaveLength = DotsCount * 1000;
 
-	if (g_ConfigSystem.get()->m_bFitToAxes)
+	if (g_ConfigSystem.get()->m_vecFunctions.at(EFitToAxes))
 		ImPlot::SetNextAxesToFit();
 }
 
@@ -250,13 +257,13 @@ void MenuElements::DrawGraph()
 				ImPlot::PlotLineG(m_vecGraphsName.at(i).c_str(), SineWave, &m_vecWaves.at(i).GetWave(), iWaveLength);
 		}
 
-		if (g_ConfigSystem.get()->m_bShowSum)
+		if (g_ConfigSystem.get()->m_vecFunctions.at(EShowSum))
 		{
 			ImPlot::SetNextLineStyle(ImVec4(0, 1, 0, 1), 2.0f);
 			ImPlot::PlotLineG("Сумма", SumWave, &m_vecWaves, iWaveLength);
 		}
 
-		if (ImPlot::IsPlotHovered() && g_ConfigSystem.get()->m_bShowMaxHeightLine)
+		if (ImPlot::IsPlotHovered() && g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine))
 		{
 			double mouseX = std::clamp((float)ImPlot::GetPlotMousePos().x, m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlTimeDiff, m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlTimeDiff + DotsCount);
 			double mouseY = ImPlot::GetPlotMousePos().y;
@@ -291,7 +298,7 @@ void MenuElements::DrawGraph()
 void MenuElements::DrawLowerItems()
 {
 	if (ImGui::Button("График в реальном времени"))
-		g_ConfigSystem.get()->m_bRealTime = !g_ConfigSystem.get()->m_bRealTime;
+		g_ConfigSystem.get()->m_vecFunctions.at(ERealTime) = !g_ConfigSystem.get()->m_vecFunctions.at(ERealTime);
 
 	if (ImGui::Button("Сброс параметров"))
 	{
@@ -309,7 +316,7 @@ void MenuElements::DrawLowerItems()
 
 void MenuElements::MainWindow()
 { 
-	if (!g_ConfigSystem.get()->m_bRealTime)
+	if (!g_ConfigSystem.get()->m_vecFunctions.at(ERealTime))
 	{
 		for (auto& _Wave : m_vecWaves)
 			_Wave.ResetTime();
