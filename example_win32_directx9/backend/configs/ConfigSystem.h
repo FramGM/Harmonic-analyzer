@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
-#include <string>
 #include <vector>
+#include <string>
 
 enum EParity : int
 {
@@ -10,9 +10,15 @@ enum EParity : int
 	ODD_PARITY
 };
 
-struct ConfigVars
+class ConfigSystem
 {
-	ConfigVars();
+public:
+	bool LoadConfig(std::string strConfigName);
+	bool SaveConfig(std::string strConfigName);
+
+	bool RemoveConfig(std::string strConfigName);
+	bool CreateConfig(std::string strConfigName);
+	bool RefreshConfig();
 
 	std::vector<std::string> m_vecSliderNames;
 	std::vector<bool> m_vecEnableSliders;
@@ -26,4 +32,4 @@ struct ConfigVars
 	float m_flLineWeigth = 1;
 };
 
-inline std::unique_ptr<ConfigVars> g_ConfigVars = std::make_unique<ConfigVars>();
+inline std::unique_ptr<ConfigSystem> g_ConfigSystem = std::make_unique<ConfigSystem>();

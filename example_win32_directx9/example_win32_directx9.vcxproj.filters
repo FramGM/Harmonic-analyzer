@@ -46,7 +46,7 @@
     <ClCompile Include="imgui\implot_items.cpp">
       <Filter>sources</Filter>
     </ClCompile>
-    <ClCompile Include="backend\Wave.cpp">
+    <ClCompile Include="backend\configs\ConfigSystem.cpp">
       <Filter>sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -64,7 +64,9 @@
     <ClInclude Include="imgui\implot.h" />
     <ClInclude Include="imgui\implot_internal.h" />
     <ClInclude Include="backend\WaveData.h" />
-    <ClInclude Include="backend\ConfigVars.h" />
-    <ClInclude Include="backend\Wave.h" />
+    <ClInclude Include="backend\configs\ConfigVars.h" />
+    <ClInclude Include="backend\waves\Wave.h" />
+    <ClInclude Include="backend\waves\WaveFunc.h" />
+    <ClInclude Include="backend\configs\ConfigSystem.h" />
   </ItemGroup>
 </Project>

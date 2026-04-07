@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
-#include "../backend/Wave.h"
+#include "../backend/waves/Wave.h"
 #include "../Settings.h"
 #include <memory>
 
