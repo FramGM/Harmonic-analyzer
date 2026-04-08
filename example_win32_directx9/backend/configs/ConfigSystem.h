@@ -30,6 +30,10 @@ public:
 	bool RemoveConfig(std::string strConfigName);
 	bool RefreshConfig();
 
+	std::vector<std::string> m_vecFiles;
+	std::string m_strSelectedFile = "";
+	int m_iSelectedFile = 0;
+
 	std::vector<std::string> m_vecSliderNames;
 	std::vector<bool> m_vecEnableSliders;
 	std::vector<bool> m_vecFunctions = std::vector<bool>(EALLFINCTIONS, false);
