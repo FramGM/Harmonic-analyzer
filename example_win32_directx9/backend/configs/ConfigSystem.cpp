@@ -25,7 +25,7 @@ static std::string DataPath() {
 	char la[MAX_PATH];
 	if (GetEnvironmentVariableA("LOCALAPPDATA", la, MAX_PATH) == 0)
 		return {};
-	std::string dir = std::string(la) + "\\HarmonicAalyzer\\";
+	std::string dir = std::string(la) + "\\HarmonicAnalyzer\\";
 	CreateDirectoryA(dir.c_str(), nullptr);
 	return dir;
 }
@@ -34,12 +34,14 @@ ConfigSystem::ConfigSystem() {
 	m_vecSliderNames = { "Частота", "Амплитуда", "Фаза", "Толщина графика", "Высота графика", "Длинна волны" };
 	m_vecEnableSliders = std::vector<bool>(m_vecSliderNames.size(), false);
 	m_strHarmonicParity = "Все";
+
+	RefreshConfig();
 }
 
 bool ConfigSystem::LoadConfig(std::string strConfigName)
 {
 	std::string strFolderPath = DataPath();
-	std::string strFilePath = strFolderPath + "\\" + strConfigName;
+	std::filesystem::path strFilePath = strFolderPath + "\\" + strConfigName;
 
 	if (strConfigName.find(".cfg") == std::string::npos)
 		strFilePath += ".cfg";
@@ -61,20 +63,20 @@ bool ConfigSystem::LoadConfig(std::string strConfigName)
 			for (; i + 1 < iCount; i++)
 				m_vecEnableSliders.at(i) = std::atoi(vecElem.at(i + 1).c_str());
 
-			strElem = vecElem.at(i);
+			strElem = vecElem.at(++i);
 			iCount = std::atoi(strElem.c_str());
 			for (; i + 1 < iCount; i++)
 				m_vecFunctions.at(i) = std::atoi(vecElem.at(i + 1).c_str());
 
-			strElem = vecElem.at(i);
+			strElem = vecElem.at(++i);
 			m_iHarmonicParity = std::atoi(strElem.c_str());
 			i++;
 
-			strElem = vecElem.at(i);
+			strElem = vecElem.at(++i);
 			m_strHarmonicParity = strElem;
 			i++;
 
-			strElem = vecElem.at(i);
+			strElem = vecElem.at(++i);
 			m_flLineWeigth = std::atof(strElem.c_str());
 		}
 	}
@@ -99,6 +101,8 @@ bool ConfigSystem::SaveConfig(std::string strConfigName)
 	GetConfigString(strConfig);
 
 	pFile << strConfig;
+
+	RefreshConfig();
 	return true;
 }
 
@@ -107,16 +111,27 @@ void ConfigSystem::GetConfigString(std::string& strOutput)
 	strOutput = std::to_string(m_vecEnableSliders.size()) + "|";
 	for (auto bValue : m_vecEnableSliders)
 	{
-		strOutput += (int)bValue + "|";
+		strOutput += std::to_string((int)bValue) + "|";
 	}
 
 	strOutput += std::to_string(m_vecFunctions.size()) + "|";
 	for (auto bValue : m_vecFunctions)
 	{
-		strOutput += (int)bValue + "|";
+		strOutput += std::to_string((int)bValue) + "|";
 	}
 
 	strOutput += std::to_string(m_iHarmonicParity) + "|";
 	strOutput += m_strHarmonicParity + "|";
 	strOutput += std::to_string(m_flLineWeigth);
+}
+
+bool ConfigSystem::RefreshConfig()
+{
+	std::string strFolderName = DataPath();
+	m_vecFiles.clear();
+
+	for (const auto& entry : std::filesystem::directory_iterator(strFolderName))
+		m_vecFiles.push_back(entry.path().filename().string());
+
+	return true;
 }
