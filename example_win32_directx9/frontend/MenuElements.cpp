@@ -120,13 +120,33 @@ void MenuElements::DrawUpperItems()
 	if (bool showMaxHeightLine = g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine); ImGui::Checkbox("Показать амплитуду сигнала в текущий момент", &showMaxHeightLine))
 		g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine) = showMaxHeightLine;
 
+
+	ImGui::SetNextItemWidth(160);
+	if (ImGui::BeginCombo("Конфигурации", g_ConfigSystem.get()->m_strSelectedFile.c_str()))
+	{
+		for (int i = 0; i < g_ConfigSystem.get()->m_vecFiles.size(); i++)
+		{
+			bool bSelected = g_ConfigSystem.get()->m_iSelectedFile == i;
+
+			if (ImGui::Selectable(g_ConfigSystem.get()->m_vecFiles.at(i).c_str(), bSelected))
+			{
+				g_ConfigSystem.get()->m_iSelectedFile = i;
+				g_ConfigSystem.get()->m_strSelectedFile = g_ConfigSystem.get()->m_vecFiles.at(i);
+			}
+		}
+		ImGui::EndCombo();
+	}
+
+	ImGui::SetNextItemWidth(160);
+	ImGui::SameLine();
 	static char chBuffer[64];
-	ImGui::InputText("Название конфига", chBuffer, IM_ARRAYSIZE(chBuffer));
+	ImGui::InputText("##configname", chBuffer, IM_ARRAYSIZE(chBuffer));
+
 	if (ImGui::Button("Сохранить"))
 		g_ConfigSystem.get()->SaveConfig(std::string(chBuffer));
 	ImGui::SameLine();
 	if (ImGui::Button("Загрузить"))
-		g_ConfigSystem.get()->LoadConfig(std::string(chBuffer));
+		g_ConfigSystem.get()->LoadConfig(g_ConfigSystem.get()->m_strSelectedFile);
 
 
 	if (ImGui::BeginCombo("Индексы гармоник", g_ConfigSystem.get()->m_strHarmonicParity.c_str()))
