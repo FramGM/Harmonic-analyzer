@@ -54,30 +54,11 @@ bool ConfigSystem::LoadConfig(std::string strConfigName)
 	while (std::getline(pFile, strElem))
 	{
 		std::vector<std::string> vecElem = split(strElem, "|");
+		int iSlidersCount = std::atoi(vecElem.at(0).c_str());
 
-		int i = 0;
+		for (int i = 0; i < iSlidersCount; i++)
 		{
-			std::string strElem = vecElem.at(i);
-
-			int iCount = std::atoi(strElem.c_str());
-			for (; i + 1 < iCount; i++)
-				m_vecEnableSliders.at(i) = std::atoi(vecElem.at(i + 1).c_str());
-
-			strElem = vecElem.at(++i);
-			iCount = std::atoi(strElem.c_str());
-			for (; i + 1 < iCount; i++)
-				m_vecFunctions.at(i) = std::atoi(vecElem.at(i + 1).c_str());
-
-			strElem = vecElem.at(++i);
-			m_iHarmonicParity = std::atoi(strElem.c_str());
-			i++;
-
-			strElem = vecElem.at(++i);
-			m_strHarmonicParity = strElem;
-			i++;
-
-			strElem = vecElem.at(++i);
-			m_flLineWeigth = std::atof(strElem.c_str());
+			m_vecEnableSliders.at(i) = std::atoi(vecElem.at(i + 1).c_str());
 		}
 	}
 }
