@@ -4,13 +4,6 @@
 #include "../backend/configs/ConfigSystem.h"
 #include <algorithm>
 
-MenuElements::MenuElements()
-{
-	Wave _Wave(0.001, 1, 0, 0, 0, 1);
-	m_vecWaves.push_back(_Wave);
-	m_vecGraphsName.push_back("1; 0 Гц");
-}
-
 static bool CheckOnParity(int n)
 {
 	bool bDrawHarmonic = false;
@@ -38,18 +31,18 @@ void MenuElements::DeleteWave(int iIndex)
 {
 	int indexToRemove = iIndex;
 
-	m_vecWaves.erase(m_vecWaves.begin() + indexToRemove);
-	m_vecGraphsName.erase(m_vecGraphsName.begin() + indexToRemove);
+	g_ConfigSystem.get()->m_vecWaves.erase(g_ConfigSystem.get()->m_vecWaves.begin() + indexToRemove);
+	g_ConfigSystem.get()->m_vecGraphsName.erase(g_ConfigSystem.get()->m_vecGraphsName.begin() + indexToRemove);
 
 	//printf("Deleted: %i\n", indexToRemove + 1);
 
-	for (int i = indexToRemove; i < m_vecWaves.size(); i++)
+	for (int i = indexToRemove; i < g_ConfigSystem.get()->m_vecWaves.size(); i++)
 	{
-		m_vecWaves[i].GetWave().m_iIndex = i + 1;
+		g_ConfigSystem.get()->m_vecWaves[i].GetWave().m_iIndex = i + 1;
 
 		char nameBuffer[64];
-		snprintf(nameBuffer, sizeof(nameBuffer), "%i; %g Гц##%i", i + 1, m_vecWaves[i].GetWave().Freq, i + 1);
-		m_vecGraphsName[i] = nameBuffer;
+		snprintf(nameBuffer, sizeof(nameBuffer), "%i; %g Гц##%i", i + 1, g_ConfigSystem.get()->m_vecWaves[i].GetWave().Freq, i + 1);
+		g_ConfigSystem.get()->m_vecGraphsName[i] = nameBuffer;
 	}
 
 	//for (int i = 0; i < m_vecWaves.size(); i++)
@@ -60,67 +53,15 @@ void MenuElements::DeleteWave(int iIndex)
 		g_Settings.m_iSelectedGraph = std::max(0, g_Settings.m_iSelectedGraph - 1);
 	}
 
-	if (!m_vecGraphsName.empty())
+	if (!g_ConfigSystem.get()->m_vecGraphsName.empty())
 	{
-		g_Settings.m_strSelectedGraph = m_vecGraphsName[g_Settings.m_iSelectedGraph];
+		g_Settings.m_strSelectedGraph = g_ConfigSystem.get()->m_vecGraphsName[g_Settings.m_iSelectedGraph];
 	}
 }
 
-void MenuElements::DrawUpperItems()
+void MenuElements::DrawCofigColumn()
 {
-	ImGui::SetNextItemWidth(110);
-
-	if (ImGui::BeginCombo("Индекс и частота гармоники", g_Settings.m_strSelectedGraph.c_str()))
-	{
-		for (int n = 0; n < m_vecGraphsName.size(); n++)
-		{
-
-			if (!CheckOnParity(n))
-				continue;
-
-			bool is_selected = (g_Settings.m_iSelectedGraph == n);
-			if (ImGui::Selectable(m_vecGraphsName[n].c_str(), is_selected))
-			{
-				g_Settings.m_strSelectedGraph = m_vecGraphsName[n];
-				g_Settings.m_iSelectedGraph = n;
-			}
-			if (is_selected)
-				ImGui::SetItemDefaultFocus();
-		}
-		ImGui::EndCombo();
-	}
-	ImGui::SameLine();
-	if (ImGui::Button("Добавить гармонику"))
-	{
-		Wave _Wave = Wave(0.001, 1, 0, 0, 0, m_vecWaves.size() + 1);
-		m_vecWaves.push_back(_Wave);
-
-		char nameBuffer[64];
-		snprintf(nameBuffer, sizeof(nameBuffer), "%i; %g Гц##%i", m_vecWaves.size(), _Wave.GetWave().Freq, m_vecWaves.size());
-
-		m_vecGraphsName.push_back(nameBuffer);
-	}
-	ImGui::SameLine();
-
-	if (ImGui::Button("Удалить текущую гармонику") && m_vecWaves.size() > 1)
-		DeleteWave();
-
-	if (g_ConfigSystem.get()->m_vecEnableSliders.size() != g_ConfigSystem.get()->m_vecSliderNames.size()) {
-		g_ConfigSystem.get()->m_vecEnableSliders.resize(g_ConfigSystem.get()->m_vecSliderNames.size(), false);
-	}
-
-	ShowMultiSelectCombo("Настройки", g_ConfigSystem.get()->m_vecSliderNames, g_ConfigSystem.get()->m_vecEnableSliders);
-
-	if (bool showSum = g_ConfigSystem.get()->m_vecFunctions.at(EShowSum); ImGui::Checkbox("Показать сумму гармоник", &showSum))
-		g_ConfigSystem.get()->m_vecFunctions.at(EShowSum) = showSum;
-	
-	if (bool fitToAxes = g_ConfigSystem.get()->m_vecFunctions.at(EFitToAxes); ImGui::Checkbox("Авто-масштабирование", &fitToAxes))
-		g_ConfigSystem.get()->m_vecFunctions.at(EFitToAxes) = fitToAxes;
-
-	if (bool showMaxHeightLine = g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine); ImGui::Checkbox("Показать амплитуду сигнала в текущий момент", &showMaxHeightLine))
-		g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine) = showMaxHeightLine;
-
-
+	ImGui::NextColumn();
 	ImGui::SetNextItemWidth(160);
 	if (ImGui::BeginCombo("Конфигурации", g_ConfigSystem.get()->m_strSelectedFile.c_str()))
 	{
@@ -142,12 +83,83 @@ void MenuElements::DrawUpperItems()
 	static char chBuffer[64];
 	ImGui::InputText("##configname", chBuffer, IM_ARRAYSIZE(chBuffer));
 
+	if (ImGui::Button("Создать"))
+	{
+		g_ConfigSystem.get()->SaveConfig(chBuffer);
+		memset(chBuffer, 0, sizeof(chBuffer));
+	}
+
+	ImGui::SameLine();
 	if (ImGui::Button("Сохранить"))
-		g_ConfigSystem.get()->SaveConfig(std::string(chBuffer));
+		g_ConfigSystem.get()->SaveConfig(g_ConfigSystem.get()->m_strSelectedFile);
+
 	ImGui::SameLine();
 	if (ImGui::Button("Загрузить"))
-		g_ConfigSystem.get()->LoadConfig(g_ConfigSystem.get()->m_strSelectedFile);
+		g_ConfigSystem.get()->LoadConfig(chBuffer);
 
+	ImGui::SameLine();
+	if (ImGui::Button("Удалить"))
+		g_ConfigSystem.get()->RemoveConfig(g_ConfigSystem.get()->m_strSelectedFile);
+}
+
+void MenuElements::DrawUpperItems()
+{
+	ImGui::SetNextItemWidth(110);
+
+	if (ImGui::BeginCombo("Индекс и частота гармоники", g_Settings.m_strSelectedGraph.c_str()))
+	{
+		for (int n = 0; n < g_ConfigSystem.get()->m_vecGraphsName.size(); n++)
+		{
+
+			if (!CheckOnParity(n))
+				continue;
+
+			bool is_selected = (g_Settings.m_iSelectedGraph == n);
+			if (ImGui::Selectable(g_ConfigSystem.get()->m_vecGraphsName[n].c_str(), is_selected))
+			{
+				g_Settings.m_strSelectedGraph = g_ConfigSystem.get()->m_vecGraphsName[n];
+				g_Settings.m_iSelectedGraph = n;
+			}
+			if (is_selected)
+				ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Добавить гармонику"))
+	{
+		Wave _Wave = Wave(0.001, 1, 0, 0, 0, g_ConfigSystem.get()->m_vecWaves.size() + 1);
+		g_ConfigSystem.get()->m_vecWaves.push_back(_Wave);
+
+		char nameBuffer[64];
+		snprintf(nameBuffer, sizeof(nameBuffer), "%i; %g Гц##%i", g_ConfigSystem.get()->m_vecWaves.size(), _Wave.GetWave().Freq, g_ConfigSystem.get()->m_vecWaves.size());
+
+		g_ConfigSystem.get()->m_vecGraphsName.push_back(nameBuffer);
+	}
+	ImGui::SameLine();
+
+	if (ImGui::Button("Удалить текущую гармонику") && g_ConfigSystem.get()->m_vecWaves.size() > 1)
+		DeleteWave();
+
+	if (g_ConfigSystem.get()->m_vecEnableSliders.size() != g_ConfigSystem.get()->m_vecSliderNames.size()) {
+		g_ConfigSystem.get()->m_vecEnableSliders.resize(g_ConfigSystem.get()->m_vecSliderNames.size(), false);
+	}
+
+	ShowMultiSelectCombo("Настройки", g_ConfigSystem.get()->m_vecSliderNames, g_ConfigSystem.get()->m_vecEnableSliders);
+
+	ImGui::Columns(2);
+	if (bool showSum = g_ConfigSystem.get()->m_vecFunctions.at(EShowSum); ImGui::Checkbox("Показать сумму гармоник", &showSum))
+		g_ConfigSystem.get()->m_vecFunctions.at(EShowSum) = showSum;
+	
+	if (bool fitToAxes = g_ConfigSystem.get()->m_vecFunctions.at(EFitToAxes); ImGui::Checkbox("Авто-масштабирование", &fitToAxes))
+		g_ConfigSystem.get()->m_vecFunctions.at(EFitToAxes) = fitToAxes;
+
+	if (bool showMaxHeightLine = g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine); ImGui::Checkbox("Показать амплитуду сигнала в текущий момент", &showMaxHeightLine))
+		g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine) = showMaxHeightLine;
+
+	DrawCofigColumn();
+
+	ImGui::Columns(1);
 
 	if (ImGui::BeginCombo("Индексы гармоник", g_ConfigSystem.get()->m_strHarmonicParity.c_str()))
 	{
@@ -165,33 +177,33 @@ void MenuElements::DrawUpperItems()
 		ImGui::EndCombo();
 	}
 
-	for (int i = 0; i < m_vecWaves.size(); i++)
+	for (int i = 0; i < g_ConfigSystem.get()->m_vecWaves.size(); i++)
 	{
 		if (g_Settings.m_iSelectedGraph == i)
 		{
-			Wave& _CurWave = m_vecWaves.at(i);
+			Wave& _CurWave = g_ConfigSystem.get()->m_vecWaves.at(i);
 			char freqBuffer[32];
 			snprintf(freqBuffer, sizeof(freqBuffer), "%i; %g Гц##%i", i + 1, _CurWave.GetFrequency(), i);
-			m_vecGraphsName[i] = freqBuffer;
+			g_ConfigSystem.get()->m_vecGraphsName[i] = freqBuffer;
 			g_Settings.m_strSelectedGraph = freqBuffer;
 		}
 	}
 
-	if (g_Settings.m_iSelectedGraph >= 0 && g_Settings.m_iSelectedGraph < m_vecWaves.size() && g_ConfigSystem.get()->m_vecEnableSliders.at(FREQUENCY))
+	if (g_Settings.m_iSelectedGraph >= 0 && g_Settings.m_iSelectedGraph < g_ConfigSystem.get()->m_vecWaves.size() && g_ConfigSystem.get()->m_vecEnableSliders.at(FREQUENCY))
 	{
-		ImGui::SliderFloat("Частота", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Freq, 0, 1000, "%.3f");
+		ImGui::SliderFloat("Частота", &g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Freq, 0, 1000, "%.3f");
 		ImGui::SameLine();
 		if (ImGui::Button("Поставить всем одну частоту"))
 		{
-			double dlFrequency = m_vecWaves.at(g_Settings.m_iSelectedGraph).GetFrequency();
-			for (auto& _Wave : m_vecWaves)
+			double dlFrequency = g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetFrequency();
+			for (auto& _Wave : g_ConfigSystem.get()->m_vecWaves)
 				_Wave.SetFrequency(dlFrequency);
 		}
 
 		if (g_ConfigSystem.get()->m_vecEnableSliders.at(AMPLITUDE))
-			ImGui::SliderFloat("Амплитуда (k)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Amp, -200, 200, "%.3f");
+			ImGui::SliderFloat("Амплитуда (k)", &g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Amp, -200, 200, "%.3f");
 		if (g_ConfigSystem.get()->m_vecEnableSliders.at(PHASE))
-			ImGui::SliderFloat("Фаза (ф)", &m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlPhase, -200, 200, "%.3f");
+			ImGui::SliderFloat("Фаза (ф)", &g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlPhase, -200, 200, "%.3f");
 	}
 
 	if (g_ConfigSystem.get()->m_vecEnableSliders.at(WIDTHLINE))
@@ -271,21 +283,21 @@ void MenuElements::DrawGraph()
 		ImPlotStyle& pStyle = ImPlot::GetStyle();
 		pStyle.LineWeight = g_ConfigSystem.get()->m_flLineWeigth;
 
-		for (int i = 0; i < m_vecWaves.size(); i++)
+		for (int i = 0; i < g_ConfigSystem.get()->m_vecWaves.size(); i++)
 		{
 			if (CheckOnParity(i))
-				ImPlot::PlotLineG(m_vecGraphsName.at(i).c_str(), SineWave, &m_vecWaves.at(i).GetWave(), iWaveLength);
+				ImPlot::PlotLineG(g_ConfigSystem.get()->m_vecGraphsName.at(i).c_str(), SineWave, &g_ConfigSystem.get()->m_vecWaves.at(i).GetWave(), iWaveLength);
 		}
 
 		if (g_ConfigSystem.get()->m_vecFunctions.at(EShowSum))
 		{
 			ImPlot::SetNextLineStyle(ImVec4(0, 1, 0, 1), 2.0f);
-			ImPlot::PlotLineG("Сумма", SumWave, &m_vecWaves, iWaveLength);
+			ImPlot::PlotLineG("Сумма", SumWave, &g_ConfigSystem.get()->m_vecWaves, iWaveLength);
 		}
 
 		if (ImPlot::IsPlotHovered() && g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine))
 		{
-			double mouseX = std::clamp((float)ImPlot::GetPlotMousePos().x, m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlTimeDiff, m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlTimeDiff + DotsCount);
+			double mouseX = std::clamp((float)ImPlot::GetPlotMousePos().x, g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlTimeDiff, g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlTimeDiff + DotsCount);
 			double mouseY = ImPlot::GetPlotMousePos().y;
 
 			double maxHeight = -std::numeric_limits<double>::infinity();
@@ -293,13 +305,13 @@ void MenuElements::DrawGraph()
 
 			double sum = 0;
 
-			for (int i = 0; i < m_vecWaves.size(); i++)
+			for (int i = 0; i < g_ConfigSystem.get()->m_vecWaves.size(); i++)
 			{
 				if (!CheckOnParity(i))
 					continue;
 
 
-					WaveData& wd = m_vecWaves.at(i).GetWave();
+					WaveData& wd = g_ConfigSystem.get()->m_vecWaves.at(i).GetWave();
 					sum += YFormula(&wd, mouseX);
 
 			}
@@ -322,12 +334,12 @@ void MenuElements::DrawLowerItems()
 
 	if (ImGui::Button("Сброс параметров"))
 	{
-		m_vecWaves.clear();
-		m_vecGraphsName.clear();
+		g_ConfigSystem.get()->m_vecWaves.clear();
+		g_ConfigSystem.get()->m_vecGraphsName.clear();
 
 		Wave _Wave(0.001, 1, 0, 0, 0, 1);
-		m_vecWaves.push_back(_Wave);
-		m_vecGraphsName.push_back("1. 0 Гц");
+		g_ConfigSystem.get()->m_vecWaves.push_back(_Wave);
+		g_ConfigSystem.get()->m_vecGraphsName.push_back("1. 0 Гц");
 		g_Settings.m_iSelectedGraph = 0;
 		g_Settings.m_strSelectedGraph = "1. 0 Гц";
 	}
@@ -338,12 +350,12 @@ void MenuElements::MainWindow()
 { 
 	if (!g_ConfigSystem.get()->m_vecFunctions.at(ERealTime))
 	{
-		for (auto& _Wave : m_vecWaves)
+		for (auto& _Wave : g_ConfigSystem.get()->m_vecWaves)
 			_Wave.ResetTime();
 	}
 	else
 	{
-		for (auto& _Wave : m_vecWaves)
+		for (auto& _Wave : g_ConfigSystem.get()->m_vecWaves)
 			_Wave.ResumeTime();
 	}
 

@@ -2,6 +2,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include "../waves/Wave.h"
 
 enum EParity : int
 {
@@ -25,7 +26,6 @@ public:
 	ConfigSystem();
 	bool LoadConfig(std::string strConfigName);
 	bool SaveConfig(std::string strConfigName);
-	void GetConfigString(std::string& strOutput);
 
 	bool RemoveConfig(std::string strConfigName);
 	bool RefreshConfig();
@@ -41,6 +41,15 @@ public:
 	int m_iHarmonicParity = 0;
 	std::string m_strHarmonicParity;
 	float m_flLineWeigth = 1;
+
+	std::vector<std::string> m_vecGraphsName;
+	std::vector<Wave> m_vecWaves;
+private:
+	void GetConfigString(std::string& strOutput);
+	void UpdateDisplaySelectedConfig();
+
+	std::string DataPath();
+	std::string m_strFolderPath = DataPath();
 };
 
 inline std::unique_ptr<ConfigSystem> g_ConfigSystem = std::make_unique<ConfigSystem>();

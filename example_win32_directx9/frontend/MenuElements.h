@@ -53,10 +53,9 @@ static void ShowMultiSelectCombo(const char* combo_label, std::vector<std::strin
 class MenuElements
 {
 public:
-    MenuElements();
-
     void DeleteWave(int iIndex = g_Settings.m_iSelectedGraph);
 
+    void DrawCofigColumn();
     void DrawUpperItems();
     void DrawGraph();
     void DrawLowerItems();
@@ -68,8 +67,6 @@ private:
     int iWaveLength = 1000;
 
     std::vector<std::string> m_vecHarmonicParityNames = { "Все", "Четные", "Нечетные" };
-    std::vector<std::string> m_vecGraphsName;
-    std::vector<Wave> m_vecWaves;
 };
 
 inline std::unique_ptr<MenuElements> g_Menu = std::make_unique<MenuElements>();
