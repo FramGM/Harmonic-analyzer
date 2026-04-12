@@ -88,6 +88,28 @@ bool ConfigSystem::LoadConfig(std::string strConfigName)
 
 	std::getline(pFile, strElem);
 	m_flLineWeigth = std::atof(strElem.c_str());
+
+	std::getline(pFile, strElem);
+	
+	m_vecWaves.clear();
+	m_vecGraphsName.clear();
+
+	int iWavesCount = std::atoi(strElem.c_str());
+	std::getline(pFile, strElem);
+	std::vector<std::string> vecElems = split(strElem, "|");
+
+	for (int iWave = 1, i = 0; iWave <= iWavesCount; iWave++, i += 4)
+	{
+		Wave Wave(0.001f, (float)std::atof(vecElems.at(i).c_str()), (float)std::atof(vecElems.at(i + 1).c_str()),
+			(float)std::atof(vecElems.at(i + 2).c_str()), (float)std::atof(vecElems.at(i + 3).c_str()), iWave);
+	
+		m_vecWaves.push_back(Wave);
+
+		char nameBuffer[64];
+		snprintf(nameBuffer, sizeof(nameBuffer), "%i; %g Гц##%i", iWave, Wave.GetWave().Freq, iWave);
+
+		m_vecGraphsName.push_back(nameBuffer);
+	}
 }
 
 bool ConfigSystem::SaveConfig(std::string strConfigName)
@@ -135,7 +157,18 @@ void ConfigSystem::GetConfigString(std::string& strOutput)
 
 	strOutput += std::to_string(m_iHarmonicParity) + '\n';
 	strOutput += m_strHarmonicParity + '\n';
-	strOutput += std::to_string(m_flLineWeigth);
+	strOutput += std::to_string(m_flLineWeigth) + '\n';
+
+	strOutput += std::to_string(m_vecWaves.size()) + '\n';
+	for (auto& Wave : m_vecWaves)
+	{
+		strOutput += std::to_string(Wave.GetAmplitude()) + "|";
+		strOutput += std::to_string(Wave.GetFrequency()) + "|";
+		strOutput += std::to_string(Wave.GetOffset()) + "|";
+		strOutput += std::to_string(Wave.GetPhase()) + "|";
+	}
+
+	strOutput.pop_back();
 }
 
 void ConfigSystem::UpdateDisplaySelectedConfig()

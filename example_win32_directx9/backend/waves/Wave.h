@@ -21,11 +21,14 @@ public:
 	void SetAmplitude(double dlAmplitude) { m_WaveData.Amp = dlAmplitude; }
 	void SetFrequency(double dlFrequency) { m_WaveData.Freq = dlFrequency; }
 	void SetOffset(double dlOffset) { m_WaveData.Offset = dlOffset; }
-	void SetPhase(double dPhase) { m_WaveData.m_dlPhase = dPhase; }
+	void SetPhase(double dlPhase) { m_WaveData.m_dlPhase = dlPhase; }
+
 	void SetStartTime(double dlStartTime) { m_WaveData.m_dlTimeDiff = dlStartTime; }
 
-	double GetFrequency() { return m_WaveData.Freq; }
 	double GetAmplitude() { return m_WaveData.Amp; }
+	double GetFrequency() { return m_WaveData.Freq; }
+	double GetOffset() { return m_WaveData.Offset; }
+	double GetPhase() { return m_WaveData.m_dlPhase; }
 	double GetStartPos() { return m_WaveData.X; }
 	int GetIndex() { return m_WaveData.m_iIndex; }
 

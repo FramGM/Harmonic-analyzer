@@ -95,7 +95,7 @@ void MenuElements::DrawCofigColumn()
 
 	ImGui::SameLine();
 	if (ImGui::Button("Загрузить"))
-		g_ConfigSystem.get()->LoadConfig(chBuffer);
+		g_ConfigSystem.get()->LoadConfig(g_ConfigSystem.get()->m_strSelectedFile);
 
 	ImGui::SameLine();
 	if (ImGui::Button("Удалить"))
