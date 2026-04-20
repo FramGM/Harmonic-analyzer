@@ -55,16 +55,18 @@ class MenuElements
 public:
     void DeleteWave(int iIndex = g_Settings.m_iSelectedGraph);
 
-    void DrawCofigColumn();
-    void DrawUpperItems();
+    void DrawMainSettings();
+    void DrawConfig();
+    void DrawHarmonySettings();
     void DrawGraph();
-    void DrawLowerItems();
 
     void MainWindow();
     void ApplyModernStyle();
 private:
     int DotsCount = 1;
     int iWaveLength = 1000;
+
+    uint32_t m_uiChildFlags = ImGuiChildFlags_ResizeY;
 
     std::vector<std::string> m_vecHarmonicParityNames = { "Все", "Четные", "Нечетные" };
 };

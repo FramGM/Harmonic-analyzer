@@ -59,164 +59,182 @@ void MenuElements::DeleteWave(int iIndex)
 	}
 }
 
-void MenuElements::DrawCofigColumn()
+void MenuElements::DrawMainSettings()
 {
-	ImGui::NextColumn();
-	ImGui::SetNextItemWidth(160);
-	if (ImGui::BeginCombo("Конфигурации", g_ConfigSystem.get()->m_strSelectedFile.c_str()))
+	ImGui::TextUnformatted("Основные настройки");
+	ImGui::BeginChild("Основные настройки", ImVec2(g_Settings.m_vecWindowSize.x - 35, 210), m_uiChildFlags);
 	{
-		for (int i = 0; i < g_ConfigSystem.get()->m_vecFiles.size(); i++)
-		{
-			bool bSelected = g_ConfigSystem.get()->m_iSelectedFile == i;
+		ImGui::SetNextItemWidth(110);
 
-			if (ImGui::Selectable(g_ConfigSystem.get()->m_vecFiles.at(i).c_str(), bSelected))
+		if (ImGui::BeginCombo("Индекс и частота гармоники", g_Settings.m_strSelectedGraph.c_str()))
+		{
+			for (int n = 0; n < g_ConfigSystem.get()->m_vecGraphsName.size(); n++)
 			{
-				g_ConfigSystem.get()->m_iSelectedFile = i;
-				g_ConfigSystem.get()->m_strSelectedFile = g_ConfigSystem.get()->m_vecFiles.at(i);
+
+				if (!CheckOnParity(n))
+					continue;
+
+				bool is_selected = (g_Settings.m_iSelectedGraph == n);
+				if (ImGui::Selectable(g_ConfigSystem.get()->m_vecGraphsName[n].c_str(), is_selected))
+				{
+					g_Settings.m_strSelectedGraph = g_ConfigSystem.get()->m_vecGraphsName[n];
+					g_Settings.m_iSelectedGraph = n;
+				}
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Добавить гармонику"))
+		{
+			Wave _Wave = Wave(0.001, 1, 0, 0, 0, g_ConfigSystem.get()->m_vecWaves.size() + 1);
+			g_ConfigSystem.get()->m_vecWaves.push_back(_Wave);
+
+			char nameBuffer[64];
+			snprintf(nameBuffer, sizeof(nameBuffer), "%i; %g Гц##%i", g_ConfigSystem.get()->m_vecWaves.size(), _Wave.GetWave().Freq, g_ConfigSystem.get()->m_vecWaves.size());
+
+			g_ConfigSystem.get()->m_vecGraphsName.push_back(nameBuffer);
+		}
+		ImGui::SameLine();
+
+		if (ImGui::Button("Удалить текущую гармонику") && g_ConfigSystem.get()->m_vecWaves.size() > 1)
+			DeleteWave();
+
+		if (g_ConfigSystem.get()->m_vecEnableSliders.size() != g_ConfigSystem.get()->m_vecSliderNames.size()) {
+			g_ConfigSystem.get()->m_vecEnableSliders.resize(g_ConfigSystem.get()->m_vecSliderNames.size(), false);
+		}
+
+		ShowMultiSelectCombo("Настройки", g_ConfigSystem.get()->m_vecSliderNames, g_ConfigSystem.get()->m_vecEnableSliders);
+
+		if (bool showSum = g_ConfigSystem.get()->m_vecFunctions.at(EShowSum); ImGui::Checkbox("Показать сумму гармоник", &showSum))
+			g_ConfigSystem.get()->m_vecFunctions.at(EShowSum) = showSum;
+
+		if (bool fitToAxes = g_ConfigSystem.get()->m_vecFunctions.at(EFitToAxes); ImGui::Checkbox("Авто-масштабирование", &fitToAxes))
+			g_ConfigSystem.get()->m_vecFunctions.at(EFitToAxes) = fitToAxes;
+
+		if (bool showMaxHeightLine = g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine); ImGui::Checkbox("Показать амплитуду сигнала в текущий момент", &showMaxHeightLine))
+			g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine) = showMaxHeightLine;
+
+		if (ImGui::BeginCombo("Индексы гармоник", g_ConfigSystem.get()->m_strHarmonicParity.c_str()))
+		{
+			for (int n = 0; n < m_vecHarmonicParityNames.size(); n++)
+			{
+				bool is_selected = (g_ConfigSystem.get()->m_iHarmonicParity == n);
+				if (ImGui::Selectable(m_vecHarmonicParityNames[n].c_str(), is_selected))
+				{
+					g_ConfigSystem.get()->m_strHarmonicParity = m_vecHarmonicParityNames[n];
+					g_ConfigSystem.get()->m_iHarmonicParity = n;
+				}
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+
+		for (int i = 0; i < g_ConfigSystem.get()->m_vecWaves.size(); i++)
+		{
+			if (g_Settings.m_iSelectedGraph == i)
+			{
+				Wave& _CurWave = g_ConfigSystem.get()->m_vecWaves.at(i);
+				char freqBuffer[32];
+				snprintf(freqBuffer, sizeof(freqBuffer), "%i; %g Гц##%i", i + 1, _CurWave.GetFrequency(), i);
+				g_ConfigSystem.get()->m_vecGraphsName[i] = freqBuffer;
+				g_Settings.m_strSelectedGraph = freqBuffer;
 			}
 		}
-		ImGui::EndCombo();
 	}
-
-	ImGui::SetNextItemWidth(160);
-	ImGui::SameLine();
-	static char chBuffer[64];
-	ImGui::InputText("##configname", chBuffer, IM_ARRAYSIZE(chBuffer));
-
-	if (ImGui::Button("Создать"))
-	{
-		g_ConfigSystem.get()->SaveConfig(chBuffer);
-		memset(chBuffer, 0, sizeof(chBuffer));
-	}
-
-	ImGui::SameLine();
-	if (ImGui::Button("Сохранить"))
-		g_ConfigSystem.get()->SaveConfig(g_ConfigSystem.get()->m_strSelectedFile);
-
-	ImGui::SameLine();
-	if (ImGui::Button("Загрузить"))
-		g_ConfigSystem.get()->LoadConfig(g_ConfigSystem.get()->m_strSelectedFile);
-
-	ImGui::SameLine();
-	if (ImGui::Button("Удалить"))
-		g_ConfigSystem.get()->RemoveConfig(g_ConfigSystem.get()->m_strSelectedFile);
+	ImGui::EndChild();
 }
 
-void MenuElements::DrawUpperItems()
+void MenuElements::DrawConfig()
 {
-	ImGui::SetNextItemWidth(110);
-
-	if (ImGui::BeginCombo("Индекс и частота гармоники", g_Settings.m_strSelectedGraph.c_str()))
-	{
-		for (int n = 0; n < g_ConfigSystem.get()->m_vecGraphsName.size(); n++)
-		{
-
-			if (!CheckOnParity(n))
-				continue;
-
-			bool is_selected = (g_Settings.m_iSelectedGraph == n);
-			if (ImGui::Selectable(g_ConfigSystem.get()->m_vecGraphsName[n].c_str(), is_selected))
-			{
-				g_Settings.m_strSelectedGraph = g_ConfigSystem.get()->m_vecGraphsName[n];
-				g_Settings.m_iSelectedGraph = n;
-			}
-			if (is_selected)
-				ImGui::SetItemDefaultFocus();
-		}
-		ImGui::EndCombo();
-	}
 	ImGui::SameLine();
-	if (ImGui::Button("Добавить гармонику"))
+	ImGui::BeginChild("Конфигурации", ImVec2((g_Settings.m_vecWindowSize.x - 35) / 2, 205), m_uiChildFlags);
 	{
-		Wave _Wave = Wave(0.001, 1, 0, 0, 0, g_ConfigSystem.get()->m_vecWaves.size() + 1);
-		g_ConfigSystem.get()->m_vecWaves.push_back(_Wave);
-
-		char nameBuffer[64];
-		snprintf(nameBuffer, sizeof(nameBuffer), "%i; %g Гц##%i", g_ConfigSystem.get()->m_vecWaves.size(), _Wave.GetWave().Freq, g_ConfigSystem.get()->m_vecWaves.size());
-
-		g_ConfigSystem.get()->m_vecGraphsName.push_back(nameBuffer);
-	}
-	ImGui::SameLine();
-
-	if (ImGui::Button("Удалить текущую гармонику") && g_ConfigSystem.get()->m_vecWaves.size() > 1)
-		DeleteWave();
-
-	if (g_ConfigSystem.get()->m_vecEnableSliders.size() != g_ConfigSystem.get()->m_vecSliderNames.size()) {
-		g_ConfigSystem.get()->m_vecEnableSliders.resize(g_ConfigSystem.get()->m_vecSliderNames.size(), false);
-	}
-
-	ShowMultiSelectCombo("Настройки", g_ConfigSystem.get()->m_vecSliderNames, g_ConfigSystem.get()->m_vecEnableSliders);
-
-	ImGui::Columns(2);
-	if (bool showSum = g_ConfigSystem.get()->m_vecFunctions.at(EShowSum); ImGui::Checkbox("Показать сумму гармоник", &showSum))
-		g_ConfigSystem.get()->m_vecFunctions.at(EShowSum) = showSum;
-	
-	if (bool fitToAxes = g_ConfigSystem.get()->m_vecFunctions.at(EFitToAxes); ImGui::Checkbox("Авто-масштабирование", &fitToAxes))
-		g_ConfigSystem.get()->m_vecFunctions.at(EFitToAxes) = fitToAxes;
-
-	if (bool showMaxHeightLine = g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine); ImGui::Checkbox("Показать амплитуду сигнала в текущий момент", &showMaxHeightLine))
-		g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine) = showMaxHeightLine;
-
-	DrawCofigColumn();
-
-	ImGui::Columns(1);
-
-	if (ImGui::BeginCombo("Индексы гармоник", g_ConfigSystem.get()->m_strHarmonicParity.c_str()))
-	{
-		for (int n = 0; n < m_vecHarmonicParityNames.size(); n++)
+		ImGui::SetNextItemWidth(160);
+		if (ImGui::BeginCombo("Конфигурации", g_ConfigSystem.get()->m_strSelectedFile.c_str()))
 		{
-			bool is_selected = (g_ConfigSystem.get()->m_iHarmonicParity == n);
-			if (ImGui::Selectable(m_vecHarmonicParityNames[n].c_str(), is_selected))
+			for (int i = 0; i < g_ConfigSystem.get()->m_vecFiles.size(); i++)
 			{
-				g_ConfigSystem.get()->m_strHarmonicParity = m_vecHarmonicParityNames[n];
-				g_ConfigSystem.get()->m_iHarmonicParity = n;
+				bool bSelected = g_ConfigSystem.get()->m_iSelectedFile == i;
+
+				if (ImGui::Selectable(g_ConfigSystem.get()->m_vecFiles.at(i).c_str(), bSelected))
+				{
+					g_ConfigSystem.get()->m_iSelectedFile = i;
+					g_ConfigSystem.get()->m_strSelectedFile = g_ConfigSystem.get()->m_vecFiles.at(i);
+				}
 			}
-			if (is_selected)
-				ImGui::SetItemDefaultFocus();
+			ImGui::EndCombo();
 		}
-		ImGui::EndCombo();
-	}
 
-	for (int i = 0; i < g_ConfigSystem.get()->m_vecWaves.size(); i++)
-	{
-		if (g_Settings.m_iSelectedGraph == i)
-		{
-			Wave& _CurWave = g_ConfigSystem.get()->m_vecWaves.at(i);
-			char freqBuffer[32];
-			snprintf(freqBuffer, sizeof(freqBuffer), "%i; %g Гц##%i", i + 1, _CurWave.GetFrequency(), i);
-			g_ConfigSystem.get()->m_vecGraphsName[i] = freqBuffer;
-			g_Settings.m_strSelectedGraph = freqBuffer;
-		}
-	}
-
-	if (g_Settings.m_iSelectedGraph >= 0 && g_Settings.m_iSelectedGraph < g_ConfigSystem.get()->m_vecWaves.size() && g_ConfigSystem.get()->m_vecEnableSliders.at(FREQUENCY))
-	{
-		ImGui::SliderFloat("Частота", &g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Freq, 0, 1000, "%.3f");
+		ImGui::SetNextItemWidth(160);
 		ImGui::SameLine();
-		if (ImGui::Button("Поставить всем одну частоту"))
+		static char chBuffer[64];
+		ImGui::InputText("##configname", chBuffer, IM_ARRAYSIZE(chBuffer));
+
+		if (ImGui::Button("Создать"))
 		{
-			double dlFrequency = g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetFrequency();
-			for (auto& _Wave : g_ConfigSystem.get()->m_vecWaves)
-				_Wave.SetFrequency(dlFrequency);
+			g_ConfigSystem.get()->SaveConfig(chBuffer);
+			memset(chBuffer, 0, sizeof(chBuffer));
 		}
 
-		if (g_ConfigSystem.get()->m_vecEnableSliders.at(AMPLITUDE))
-			ImGui::SliderFloat("Амплитуда (k)", &g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Amp, -200, 200, "%.3f");
-		if (g_ConfigSystem.get()->m_vecEnableSliders.at(PHASE))
-			ImGui::SliderFloat("Фаза (ф)", &g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlPhase, -200, 200, "%.3f");
+		ImGui::SameLine();
+		if (ImGui::Button("Сохранить"))
+			g_ConfigSystem.get()->SaveConfig(g_ConfigSystem.get()->m_strSelectedFile);
+
+		ImGui::SameLine();
+		if (ImGui::Button("Загрузить"))
+			g_ConfigSystem.get()->LoadConfig(g_ConfigSystem.get()->m_strSelectedFile);
+
+		ImGui::SameLine();
+		if (ImGui::Button("Удалить"))
+			g_ConfigSystem.get()->RemoveConfig(g_ConfigSystem.get()->m_strSelectedFile);
 	}
+	ImGui::EndChild();
+}
 
-	if (g_ConfigSystem.get()->m_vecEnableSliders.at(WIDTHLINE))
-		ImGui::SliderFloat("Толщина графика", &g_ConfigSystem.get()->m_flLineWeigth, 0.1f, 10);
-	if (g_ConfigSystem.get()->m_vecEnableSliders.at(HEIGTHGRAPH))
-		ImGui::SliderFloat("Высота графика", &g_Settings.m_vecGraphSize.y, 100.f, 2140.f);
+void MenuElements::DrawHarmonySettings()
+{
+	ImGui::TextUnformatted("Настройка гармоники");
+	ImGui::SameLine();
+	ImGui::SetCursorPosX(g_Settings.m_vecWindowSize.x / 2);
+	ImGui::TextUnformatted("Конфигурации");
+	ImGui::BeginChild("Настройка гармоники", ImVec2((g_Settings.m_vecWindowSize.x - 42) / 2, 205), m_uiChildFlags);
+	{
+		if (g_Settings.m_iSelectedGraph >= 0 && g_Settings.m_iSelectedGraph < g_ConfigSystem.get()->m_vecWaves.size() && g_ConfigSystem.get()->m_vecEnableSliders.at(FREQUENCY))
+		{
+			ImGui::SetNextItemWidth(160);
+			ImGui::SliderFloat("Частота", &g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Freq, 0, 1000, "%.3f");
+			ImGui::SameLine();
+			if (ImGui::Button("Поставить всем одну частоту"))
+			{
+				double dlFrequency = g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetFrequency();
+				for (auto& _Wave : g_ConfigSystem.get()->m_vecWaves)
+					_Wave.SetFrequency(dlFrequency);
+			}
 
-	if (g_ConfigSystem.get()->m_vecEnableSliders.at(WAVELENGTH))
-		if (ImGui::SliderInt("Длина волны", &DotsCount, 1, 100))
-			iWaveLength = DotsCount * 1000;
+			if (g_ConfigSystem.get()->m_vecEnableSliders.at(AMPLITUDE))
+				ImGui::SliderFloat("Амплитуда (k)", &g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().Amp, -200, 200, "%.3f");
+			if (g_ConfigSystem.get()->m_vecEnableSliders.at(PHASE))
+				ImGui::SliderFloat("Фаза (ф)", &g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlPhase, -200, 200, "%.3f");
+		}
 
-	if (g_ConfigSystem.get()->m_vecFunctions.at(EFitToAxes))
-		ImPlot::SetNextAxesToFit();
+		if (g_ConfigSystem.get()->m_vecEnableSliders.at(WIDTHLINE))
+			ImGui::SliderFloat("Толщина графика", &g_ConfigSystem.get()->m_flLineWeigth, 0.1f, 10);
+		if (g_ConfigSystem.get()->m_vecEnableSliders.at(HEIGTHGRAPH))
+			ImGui::SliderFloat("Высота графика", &g_Settings.m_vecGraphSize.y, 100.f, 2140.f);
+
+		if (g_ConfigSystem.get()->m_vecEnableSliders.at(WAVELENGTH))
+			if (ImGui::SliderInt("Длина волны", &DotsCount, 1, 100))
+				iWaveLength = DotsCount * 1000;
+
+		if (g_ConfigSystem.get()->m_vecFunctions.at(EFitToAxes))
+			ImPlot::SetNextAxesToFit();
+
+		ImGui::SetNextWindowSize(ImVec2(ImGui::GetWindowWidth(), ImGui::GetWindowHeight()));
+	}
+	ImGui::EndChild();
 }
 
 struct MaxLineData
@@ -273,77 +291,79 @@ static ImPlotPoint SumWave(int idx, void* data)
 
 void MenuElements::DrawGraph()
 {
-	g_Settings.m_vecGraphSize.x = ImGui::GetWindowWidth() - 20;
-
-	if (ImPlot::BeginPlot("График", g_Settings.m_vecGraphSize))
+	ImGui::TextUnformatted("График и настройки");
+	ImGui::BeginChild("График и настройки", ImVec2(g_Settings.m_vecWindowSize.x - 35, 436), m_uiChildFlags);
 	{
-		ImPlot::SetupAxis(ImAxis_X1, "t, с");
-		ImPlot::SetupAxis(ImAxis_Y1, "Амплитуда, A");
+		g_Settings.m_vecGraphSize.x = ImGui::GetWindowWidth() - 20;
 
-		ImPlotStyle& pStyle = ImPlot::GetStyle();
-		pStyle.LineWeight = g_ConfigSystem.get()->m_flLineWeigth;
-
-		for (int i = 0; i < g_ConfigSystem.get()->m_vecWaves.size(); i++)
+		if (ImPlot::BeginPlot("График", g_Settings.m_vecGraphSize))
 		{
-			if (CheckOnParity(i))
-				ImPlot::PlotLineG(g_ConfigSystem.get()->m_vecGraphsName.at(i).c_str(), SineWave, &g_ConfigSystem.get()->m_vecWaves.at(i).GetWave(), iWaveLength);
-		}
+			ImPlot::SetupAxis(ImAxis_X1, "t, с");
+			ImPlot::SetupAxis(ImAxis_Y1, "Амплитуда, A");
 
-		if (g_ConfigSystem.get()->m_vecFunctions.at(EShowSum))
-		{
-			ImPlot::SetNextLineStyle(ImVec4(0, 1, 0, 1), 2.0f);
-			ImPlot::PlotLineG("Сумма", SumWave, &g_ConfigSystem.get()->m_vecWaves, iWaveLength);
-		}
-
-		if (ImPlot::IsPlotHovered() && g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine))
-		{
-			double mouseX = std::clamp((float)ImPlot::GetPlotMousePos().x, g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlTimeDiff, g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlTimeDiff + DotsCount);
-			double mouseY = ImPlot::GetPlotMousePos().y;
-
-			double maxHeight = -std::numeric_limits<double>::infinity();
-			double minHeight = std::numeric_limits<double>::infinity();
-
-			double sum = 0;
+			ImPlotStyle& pStyle = ImPlot::GetStyle();
+			pStyle.LineWeight = g_ConfigSystem.get()->m_flLineWeigth;
 
 			for (int i = 0; i < g_ConfigSystem.get()->m_vecWaves.size(); i++)
 			{
-				if (!CheckOnParity(i))
-					continue;
+				if (CheckOnParity(i))
+					ImPlot::PlotLineG(g_ConfigSystem.get()->m_vecGraphsName.at(i).c_str(), SineWave, &g_ConfigSystem.get()->m_vecWaves.at(i).GetWave(), iWaveLength);
+			}
+
+			if (g_ConfigSystem.get()->m_vecFunctions.at(EShowSum))
+			{
+				ImPlot::SetNextLineStyle(ImVec4(0, 1, 0, 1), 2.0f);
+				ImPlot::PlotLineG("Сумма", SumWave, &g_ConfigSystem.get()->m_vecWaves, iWaveLength);
+			}
+
+			if (ImPlot::IsPlotHovered() && g_ConfigSystem.get()->m_vecFunctions.at(EShowMaxHeightLine))
+			{
+				double mouseX = std::clamp((float)ImPlot::GetPlotMousePos().x, g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlTimeDiff, g_ConfigSystem.get()->m_vecWaves.at(g_Settings.m_iSelectedGraph).GetWave().m_dlTimeDiff + DotsCount);
+				double mouseY = ImPlot::GetPlotMousePos().y;
+
+				double maxHeight = -std::numeric_limits<double>::infinity();
+				double minHeight = std::numeric_limits<double>::infinity();
+
+				double sum = 0;
+
+				for (int i = 0; i < g_ConfigSystem.get()->m_vecWaves.size(); i++)
+				{
+					if (!CheckOnParity(i))
+						continue;
 
 
 					WaveData& wd = g_ConfigSystem.get()->m_vecWaves.at(i).GetWave();
 					sum += YFormula(&wd, mouseX);
 
+				}
+				maxHeight = std::max(maxHeight, sum);
+				minHeight = std::min(minHeight, sum);
+
+				ImPlot::DragLineX(0, &mouseX, ImVec4(1, 0, 0, 1), 1.0f, ImPlotDragToolFlags_NoInputs);
+
+				ImPlot::Annotation(mouseX, maxHeight, ImVec4(1, 1, 1, 1), ImVec2(5, 5), true, "Макс: %.2f", maxHeight);
 			}
-			maxHeight = std::max(maxHeight, sum);
-			minHeight = std::min(minHeight, sum);
 
-			ImPlot::DragLineX(0, &mouseX, ImVec4(1, 0, 0, 1), 1.0f, ImPlotDragToolFlags_NoInputs);
-
-			ImPlot::Annotation(mouseX, maxHeight, ImVec4(1, 1, 1, 1), ImVec2(5, 5), true, "Макс: %.2f", maxHeight);
+			ImPlot::EndPlot();
 		}
 
-		ImPlot::EndPlot();
+		if (ImGui::Button("График в реальном времени"))
+			g_ConfigSystem.get()->m_vecFunctions.at(ERealTime) = !g_ConfigSystem.get()->m_vecFunctions.at(ERealTime);
+
+		if (ImGui::Button("Сброс параметров"))
+		{
+			g_ConfigSystem.get()->m_vecWaves.clear();
+			g_ConfigSystem.get()->m_vecGraphsName.clear();
+
+			Wave _Wave(0.001, 1, 0, 0, 0, 1);
+			g_ConfigSystem.get()->m_vecWaves.push_back(_Wave);
+			g_ConfigSystem.get()->m_vecGraphsName.push_back("1; 0 Гц");
+			g_Settings.m_iSelectedGraph = 0;
+			g_Settings.m_strSelectedGraph = "1; 0 Гц";
+		}
+
 	}
-}
-
-void MenuElements::DrawLowerItems()
-{
-	if (ImGui::Button("График в реальном времени"))
-		g_ConfigSystem.get()->m_vecFunctions.at(ERealTime) = !g_ConfigSystem.get()->m_vecFunctions.at(ERealTime);
-
-	if (ImGui::Button("Сброс параметров"))
-	{
-		g_ConfigSystem.get()->m_vecWaves.clear();
-		g_ConfigSystem.get()->m_vecGraphsName.clear();
-
-		Wave _Wave(0.001, 1, 0, 0, 0, 1);
-		g_ConfigSystem.get()->m_vecWaves.push_back(_Wave);
-		g_ConfigSystem.get()->m_vecGraphsName.push_back("1. 0 Гц");
-		g_Settings.m_iSelectedGraph = 0;
-		g_Settings.m_strSelectedGraph = "1. 0 Гц";
-	}
-
+	ImGui::EndChild();
 }
 
 void MenuElements::MainWindow()
@@ -359,13 +379,10 @@ void MenuElements::MainWindow()
 			_Wave.ResumeTime();
 	}
 
-	ImGui::BeginChild("Main", ImVec2(g_Settings.m_vecWindowSize.x - 35, g_Settings.m_vecWindowSize.y - 55));
-	{
-		DrawUpperItems();
-		DrawGraph();
-		DrawLowerItems();
-	}
-	ImGui::EndChild();
+	DrawMainSettings();
+	DrawHarmonySettings();
+	DrawConfig();
+	DrawGraph();
 }
 
 void MenuElements::ApplyModernStyle()
