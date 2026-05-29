@@ -41,14 +41,14 @@ int main(int, char**)
     wc.style         = CS_CLASSDC;
     wc.lpfnWndProc   = WndProc;
     wc.hInstance     = GetModuleHandle(nullptr);
-    wc.lpszClassName = L"Work";
+    wc.lpszClassName = L"Harmonic analyzer";
     //wc.hIcon         = LoadIcon(wc.hInstance, MAKEINTRESOURCE(ICO_1));
     //wc.hIconSm       = wc.hIcon;
     wc.hCursor       = LoadCursor(nullptr, IDC_ARROW);
     wc.hbrBackground = nullptr;
     wc.lpszMenuName  = nullptr;
     ::RegisterClassExW(&wc);
-    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Work", WS_OVERLAPPEDWINDOW, 100, 100, g_Settings.m_vecWindowSize.x, g_Settings.m_vecWindowSize.y, nullptr, nullptr, wc.hInstance, nullptr);
+    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Harmonic analyzer", WS_OVERLAPPEDWINDOW, 100, 100, g_Settings.m_vecWindowSize.x, g_Settings.m_vecWindowSize.y, nullptr, nullptr, wc.hInstance, nullptr);
 	::ShowWindow(::GetConsoleWindow(), SW_HIDE);
 
     // Initialize Direct3D
