@@ -15,7 +15,8 @@
 Нажатие на слайдер, затем нажатие Tab на нем позволяет поставить значение с точностью до 3-ех знаков
 \
 Скриншот программы:\
-<img width="1919" height="834" alt="image" src="https://github.com/user-attachments/assets/59ca047b-a1fd-4e62-9628-b8e53dc5ae2b" />\
+<img width="1919" height="958" alt="image" src="https://github.com/user-attachments/assets/4a5f1a21-ad50-436b-86e0-6cec0f9a3298" />
+\
 \
 Сборка программы возможна в Debug/Release и x86/x64.\
 Visual Studio 2026. Стандарты языков: C++ 20, C17.\
